@@ -1,0 +1,12 @@
+services:
+  postgres:
+    container_name: test_constructor_server
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 12345
+      PGDATA: /data/postgres
+
+    volumes:
+      - ./postgres-data:/data/postgres
+    ports: -"5432:5432"
