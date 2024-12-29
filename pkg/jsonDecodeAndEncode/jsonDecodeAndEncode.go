@@ -56,3 +56,8 @@ func (s *DecodeAndEncodeJson) DecodeAndValidationBody(payload any) error {
 
 	return nil
 }
+
+func (s *DecodeAndEncodeJson) Marshall(payload any) ([]byte, error) {
+	s.w.Header().Set("Content-Type", "application/json")
+	return json.Marshal(payload)
+}

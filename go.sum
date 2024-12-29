@@ -8,6 +8,8 @@ github.com/MiracleCanCode/zaperr v0.0.0-20241227162056-74135bec9aca h1:xsZM0sfvm
 github.com/MiracleCanCode/zaperr v0.0.0-20241227162056-74135bec9aca/go.mod h1:brOAAm3rLwZz6pNKxbt+fXbN7R3zRviTaOBqhczWzvQ=
 github.com/MiracleCanCode/zaperr v0.0.0-20241227172607-6343074d7012 h1:wmvGtHubh5lnPFh9A/+Smgn35ei+m36VsW/scpNnEZU=
 github.com/MiracleCanCode/zaperr v0.0.0-20241227172607-6343074d7012/go.mod h1:brOAAm3rLwZz6pNKxbt+fXbN7R3zRviTaOBqhczWzvQ=
+github.com/MiracleCanCode/zaperr v0.0.0-20241228123236-5498aa3f5d1b h1:/KCaZSUrJjwhPdRx169XECR4imT3lKNP+7JM7KK48zM=
+github.com/MiracleCanCode/zaperr v0.0.0-20241228123236-5498aa3f5d1b/go.mod h1:brOAAm3rLwZz6pNKxbt+fXbN7R3zRviTaOBqhczWzvQ=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/gabriel-vasile/mimetype v1.4.3 h1:in2uUcidCuFcDKtdcBxlR0rJ1+fsokWf+uqxgUFjbI0=
 github.com/gabriel-vasile/mimetype v1.4.3/go.mod h1:d8uq/6HKRL6CGdk+aubisF/M5GcPfT7nKyLpA0lbSSk=

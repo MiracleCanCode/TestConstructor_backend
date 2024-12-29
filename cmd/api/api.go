@@ -36,7 +36,7 @@ func New(db *db.Db, logger *zap.Logger, cfg *configs.Config, handleErrors *zaper
 }
 
 func (s *api) RunApp() error {
-	s.log.Sugar().Infof("Server run on http://localhost:%d", s.addr)
+	s.log.Sugar().Infof("Server run on http://localhost" + s.addr)
 	return http.ListenAndServe(s.addr, s.router)
 }
 

@@ -5,7 +5,7 @@ go 1.23.4
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/MiracleCanCode/example_configuration_logger v0.0.0-20241227155048-eab3c30eeaff // indirect
-	github.com/MiracleCanCode/zaperr v0.0.0-20241227172607-6343074d7012 // indirect
+	github.com/MiracleCanCode/zaperr v0.0.0-20241228123236-5498aa3f5d1b // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
