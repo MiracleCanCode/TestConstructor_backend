@@ -2,6 +2,7 @@ package getTest
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/MiracleCanCode/zaperr"
 	"github.com/gorilla/mux"
@@ -69,7 +70,12 @@ func (s *getTestHandler) GetTestById() http.HandlerFunc {
 		decoderAndEncoder := jsonDecodeAndEncode.NewDecodeAndEncodeJson(r, s.logger, w)
 
 		id := mux.Vars(r)["id"]
-		getTest, err := s.service.GetTestById(id)
+		parseId, err := strconv.ParseUint(id, 10, 64)
+		if err != nil {
+			s.logger.Error("Failed parse id, error:" + err.Error())
+			return
+		}
+		getTest, err := s.service.GetTestById(uint(parseId))
 		if err != nil {
 			s.handleErrors.LogError(err, "Failed to get test", func() {
 				http.Error(w, "Failed to get test: "+err.Error(), http.StatusInternalServerError)

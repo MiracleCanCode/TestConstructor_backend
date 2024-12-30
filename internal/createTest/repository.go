@@ -16,6 +16,7 @@ func NewCreateTestRepository(db *db.Db) *CreateTestRepository {
 }
 
 func (s *CreateTestRepository) Create(data *models.Test) error {
+
 	res := s.db.Create(&data)
 	if res.Error != nil {
 		return res.Error

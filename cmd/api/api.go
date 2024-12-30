@@ -9,6 +9,7 @@ import (
 	"github.com/server/internal/auth"
 	"github.com/server/internal/createTest"
 	"github.com/server/internal/getTest"
+	validateresulttest "github.com/server/internal/validateResultTest"
 	"github.com/server/pkg/db"
 	"github.com/server/pkg/middleware"
 	"go.uber.org/zap"
@@ -44,4 +45,5 @@ func (s *api) FillEndpoints() {
 	auth.NewAuthHandler(s.router, s.log, s.db, s.cfg, s.handleErrors)
 	createTest.NewCreateTestHandler(s.log, s.db, s.router, s.handleErrors)
 	getTest.NewGetTestHandler(s.log, s.db, s.router, s.handleErrors)
+	validateresulttest.NewValidateTestHandler(s.db, s.router, s.log)
 }

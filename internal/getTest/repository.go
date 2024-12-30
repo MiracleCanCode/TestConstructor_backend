@@ -35,7 +35,7 @@ func (s *GetTestRepository) GetAllTests(login string, offset, limit int) ([]mode
 	return tests, count, nil
 }
 
-func (s *GetTestRepository) GetTestById(id string) (*models.Test, error) {
+func (s *GetTestRepository) GetTestById(id uint) (*models.Test, error) {
 	var test models.Test
 
 	err := s.db.Preload("Questions.Variants").First(&test, "id = ?", id).Error

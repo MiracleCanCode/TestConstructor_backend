@@ -27,6 +27,6 @@ func (s *GetTestService) GetAllTests(login string, limit, offset int) ([]models.
 	return s.repository.GetAllTests(login, offset, limit)
 }
 
-func (s *GetTestService) GetTestById(id string) (*models.Test, error) {
+func (s *GetTestService) GetTestById(id uint) (*models.Test, error) {
 	return s.repository.GetTestById(id)
 }
