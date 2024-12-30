@@ -40,7 +40,8 @@ func mapVariants(variants []CreateVariantInput) []models.Variant {
 
 	for i, variant := range variants {
 		mappedVariants[i] = models.Variant{
-			Name: variant.Name,
+			Name:      variant.Name,
+			IsCorrect: variant.IsCorrect,
 		}
 	}
 
@@ -65,5 +66,6 @@ type CreateQuestionInput struct {
 }
 
 type CreateVariantInput struct {
-	Name string `json:"name" validate:"required"`
+	Name      string `json:"name" validate:"required"`
+	IsCorrect bool   `json:"is_correct" validate:"required"`
 }

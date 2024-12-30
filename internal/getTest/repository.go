@@ -1,6 +1,8 @@
 package getTest
 
 import (
+	"fmt"
+
 	"github.com/server/models"
 	"github.com/server/pkg/db"
 )
@@ -15,24 +17,24 @@ func NewGetTestRepository(db *db.Db) *GetTestRepository {
 	}
 }
 
-func (s *GetTestRepository) GetAllTests(login string, offset, limit int) ([]*models.Test, int64, error) {
+func (s *GetTestRepository) GetAllTests(login string, offset, limit int) ([]models.Test, int64, error) {
 	var (
-		tests []*models.Test
+		tests []models.Test
 		count int64
 	)
 
-	err := s.db.Table("tests").Where("deleted_at is null").Count(&count).Error
+	fmt.Println(login)
+	err := s.db.Table("tests").Where("deleted_at is null and author_login = ?", login).Count(&count).Error
 	if err != nil {
 		return nil, 0, err
 	}
 
-	err = s.db.Table("tests").Where("author_login = ? AND deleted_at is null", login).
+	err = s.db.Table("tests").Where("author_login = ? AND deleted_at is null", &login).
 		Order("id ASC").Offset(offset).Limit(limit).
 		Preload("Questions.Variants").Find(&tests).Error
 	if err != nil {
 		return nil, 0, err
 	}
-
 	return tests, count, nil
 }
 

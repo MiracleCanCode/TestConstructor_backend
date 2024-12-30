@@ -23,7 +23,7 @@ func NewGetTestService(db *db.Db, logger *zap.Logger, repository *GetTestReposit
 	}
 }
 
-func (s *GetTestService) GetAllTests(login string, limit, offset int) ([]*models.Test, int64, error) {
+func (s *GetTestService) GetAllTests(login string, limit, offset int) ([]models.Test, int64, error) {
 	return s.repository.GetAllTests(login, offset, limit)
 }
 

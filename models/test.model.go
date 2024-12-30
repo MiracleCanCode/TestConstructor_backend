@@ -23,4 +23,5 @@ type Variant struct {
 	gorm.Model
 	Name       string `json:"name"`
 	QuestionID uint   `json:"question_id"`
+	IsCorrect  bool   `json:"is_correct"`
 }

@@ -2,7 +2,7 @@ package getTest
 
 import "github.com/server/models"
 
-func SetDataToGetAllTestsResponse(tests []*models.Test, count int64) *GetAllTestsResponse {
+func SetDataToGetAllTestsResponse(tests []models.Test, count int64) *GetAllTestsResponse {
 	return &GetAllTestsResponse{
 		Tests: tests,
 		Count: count,
@@ -11,8 +11,8 @@ func SetDataToGetAllTestsResponse(tests []*models.Test, count int64) *GetAllTest
 
 type GetAllTestsRequest struct {
 	Login  string `json:"login" validate:"required"`
-	Limit  int    `json:"limit" validate:"gte=0"`
-	Offset int    `json:"offset" validate:"gte=0"`
+	Limit  int    `json:"limit" validate:"required"`
+	Offset int    `json:"offset" validate:"required"`
 }
 
 type GetTestByIdRequest struct {
@@ -20,8 +20,8 @@ type GetTestByIdRequest struct {
 }
 
 type GetAllTestsResponse struct {
-	Tests []*models.Test `json:"tests"`
-	Count int64          `json:"count"`
+	Tests []models.Test `json:"tests"`
+	Count int64         `json:"count"`
 }
 
 type GetTestByIdResponse struct {

@@ -7,7 +7,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/server/pkg/db"
 	"github.com/server/pkg/jsonDecodeAndEncode"
-	"github.com/server/pkg/middleware"
 	"go.uber.org/zap"
 )
 
@@ -25,16 +24,15 @@ func NewCreateTestHandler(logger *zap.Logger, db *db.Db, router *mux.Router, han
 	}
 
 	router.HandleFunc("/api/createAnonymusTest", handler.CreateAnonymusTest()).Methods("POST")
-	router.HandleFunc("/api/createTest", middleware.IsAuthMiddleware(handler.CreateTest())).Methods("POST")
+	router.HandleFunc("/api/createTest", handler.CreateTest()).Methods("POST")
 }
 
 func (s *createTestHandler) CreateAnonymusTest() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		json := jsonDecodeAndEncode.NewDecodeAndEncodeJson(r, s.logger, w)
-
 		var payload CreateAnonymusTestRequest
+		json := jsonDecodeAndEncode.NewDecodeAndEncodeJson(r, s.logger, w)
 
 		err := s.handleErrors.LogError(json.DecodeAndValidationBody(&payload), "Failed to decode body", func() {
 			http.Error(w, "Failed to decode body", http.StatusBadRequest)
@@ -62,9 +60,8 @@ func (s *createTestHandler) CreateTest() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		json := jsonDecodeAndEncode.NewDecodeAndEncodeJson(r, s.logger, w)
-
 		var payload CreateTestRequest
+		json := jsonDecodeAndEncode.NewDecodeAndEncodeJson(r, s.logger, w)
 
 		err := s.handleErrors.LogError(json.DecodeAndValidationBody(&payload), "Failed to decode body", func() {
 			http.Error(w, "Failed to decode body", http.StatusBadRequest)

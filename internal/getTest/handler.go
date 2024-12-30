@@ -31,12 +31,14 @@ func NewGetTestHandler(logger *zap.Logger, db *db.Db, router *mux.Router, handle
 
 func (s *getTestHandler) GetAllTests() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		var (
+			payload *GetAllTestsRequest
+		)
 		decoderAndEncoder := jsonDecodeAndEncode.NewDecodeAndEncodeJson(r, s.logger, w)
 
-		var payload GetAllTestsRequest
-		var data GetAllTestsResponse
-
-		if err := decoderAndEncoder.DecodeAndValidationBody(&payload); err != nil {
+		if err := decoderAndEncoder.Decode(&payload); err != nil {
 			s.handleErrors.LogError(err, "Failed to decode data", func() {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 			})
@@ -50,10 +52,9 @@ func (s *getTestHandler) GetAllTests() http.HandlerFunc {
 			})
 			return
 		}
+		tests := SetDataToGetAllTestsResponse(getTests, count)
 
-		SetDataToGetAllTestsResponse(getTests, count)
-
-		if err := decoderAndEncoder.Encode(http.StatusOK, data); err != nil {
+		if err := decoderAndEncoder.Encode(http.StatusOK, tests); err != nil {
 			s.handleErrors.LogError(err, "Failed to encode data", func() {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			})
@@ -63,6 +64,8 @@ func (s *getTestHandler) GetAllTests() http.HandlerFunc {
 
 func (s *getTestHandler) GetTestById() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
 		decoderAndEncoder := jsonDecodeAndEncode.NewDecodeAndEncodeJson(r, s.logger, w)
 
 		id := mux.Vars(r)["id"]
