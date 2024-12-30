@@ -1,8 +1,6 @@
 package getTest
 
 import (
-	"fmt"
-
 	"github.com/server/models"
 	"github.com/server/pkg/db"
 )
@@ -23,7 +21,6 @@ func (s *GetTestRepository) GetAllTests(login string, offset, limit int) ([]mode
 		count int64
 	)
 
-	fmt.Println(login)
 	err := s.db.Table("tests").Where("deleted_at is null and author_login = ?", login).Count(&count).Error
 	if err != nil {
 		return nil, 0, err
