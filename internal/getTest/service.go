@@ -2,31 +2,32 @@ package getTest
 
 import (
 	"github.com/server/models"
-	"github.com/server/pkg/db"
+
+	"github.com/server/pkg/db/postgresql"
 	"go.uber.org/zap"
 )
 
-type GetTestService struct {
-	db         *db.Db
+type Service struct {
+	db         *postgresql.Db
 	logger     *zap.Logger
-	repository *GetTestRepository
+	repository *Repository
 }
 
-func NewGetTestService(db *db.Db, logger *zap.Logger, repository *GetTestRepository) *GetTestService {
+func NewService(db *postgresql.Db, logger *zap.Logger, repository *Repository) *Service {
 	if repository == nil {
-		repository = NewGetTestRepository(db)
+		repository = NewRepository(db)
 	}
-	return &GetTestService{
+	return &Service{
 		db:         db,
 		logger:     logger,
 		repository: repository,
 	}
 }
 
-func (s *GetTestService) GetAllTests(login string, limit, offset int) ([]models.Test, int64, error) {
-	return s.repository.GetAllTests(login, offset, limit)
+func (s *Service) GetAll(login string, limit, offset int) ([]models.Test, int64, error) {
+	return s.repository.GetAll(login, offset, limit)
 }
 
-func (s *GetTestService) GetTestById(id uint) (*models.Test, error) {
-	return s.repository.GetTestById(id)
+func (s *Service) GetById(id uint) (*models.Test, error) {
+	return s.repository.GetById(id)
 }

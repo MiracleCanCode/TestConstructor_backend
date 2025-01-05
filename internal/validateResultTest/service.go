@@ -3,33 +3,35 @@ package validateresulttest
 import (
 	"github.com/server/internal/getTest"
 	"github.com/server/models"
-	"github.com/server/pkg/db"
+	"github.com/server/pkg/db/postgresql"
 	"go.uber.org/zap"
 )
 
-type ValidateResultTestService struct {
-	db             *db.Db
-	getTestService *getTest.GetTestService
+type Service struct {
+	db             *postgresql.Db
+	getTestService *getTest.Service
 	logger         *zap.Logger
 }
 
-func NewValidateResultTestService(db *db.Db, logger *zap.Logger, service *getTest.GetTestService) *ValidateResultTestService {
-	return &ValidateResultTestService{
+func NewService(db *postgresql.Db, logger *zap.Logger, service *getTest.Service) *Service {
+	return &Service{
 		db:             db,
 		logger:         logger,
 		getTestService: service,
 	}
 }
 
-func (s *ValidateResultTestService) Validate(test *models.Test) (*float64, error) {
-	exampleTest, err := s.getTestService.GetTestById(test.ID)
+func (s *Service) Validate(test *models.Test) (*float64, error) {
+	exampleTest, err := s.getTestService.GetById(test.ID)
 	if err != nil {
 		s.logger.Error("Failed to get test by id, error: " + err.Error())
 		return nil, err
 	}
 
-	var totalCorrect int
-	var totalAnswers int
+	var (
+		totalCorrect int
+	 	totalAnswers int
+	)
 
 	for _, question := range exampleTest.Questions {
 		for _, variant := range question.Variants {

@@ -3,48 +3,65 @@ package createTest
 import (
 	"net/http"
 
-	"github.com/MiracleCanCode/zaperr"
 	"github.com/gorilla/mux"
-	"github.com/server/pkg/db"
-	"github.com/server/pkg/jsonDecodeAndEncode"
+	"github.com/server/pkg/db/postgresql"
+	"github.com/server/pkg/json"
 	"go.uber.org/zap"
 )
 
-type createTestHandler struct {
-	logger       *zap.Logger
-	db           *db.Db
-	handleErrors *zaperr.Zaperr
+type Handler struct {
+	logger *zap.Logger
+	db     *postgresql.Db
 }
 
-func NewCreateTestHandler(logger *zap.Logger, db *db.Db, router *mux.Router, handleErrors *zaperr.Zaperr) {
-	handler := &createTestHandler{
-		logger:       logger,
-		db:           db,
-		handleErrors: handleErrors,
+// NewCreateTestHandler создает новые маршруты для создания тестов
+// @Summary Initialize create test routes
+// @Description Set up routes for creating anonymous and authenticated tests
+// @Tags create-test
+// @Param logger path string true "Logger"
+// @Param db path string true "Database"
+// @Param router path string true "Router"
+// @Param handleErrors path string true "Error handler"
+// @Success 200 {string} string "Routes initialized successfully"
+func New(logger *zap.Logger, db *postgresql.Db, router *mux.Router) {
+	handler := &Handler{
+		logger: logger,
+		db:     db,
 	}
 
-	router.HandleFunc("/api/createAnonymusTest", handler.CreateAnonymusTest()).Methods("POST")
-	router.HandleFunc("/api/createTest", handler.CreateTest()).Methods("POST")
+	router.HandleFunc("/api/createAnonymusTest", handler.Anonymus()).Methods("POST")
+	router.HandleFunc("/api/createTest", handler.StandartTest()).Methods("POST")
 }
 
-func (s *createTestHandler) CreateAnonymusTest() http.HandlerFunc {
+// CreateAnonymusTest - обработчик для создания анонимного теста
+// @Summary Create an anonymous test
+// @Description Creates a new anonymous test using provided data
+// @Tags create-test
+// @Accept json
+// @Produce json
+// @Param test body CreateAnonymusTestRequest true "Anonymus Test Data"
+// @Success 201 {string} string "Test created successfully"
+// @Failure 400 {object} ErrorResponse "Failed to decode body"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /api/createAnonymusTest [post]
+func (s *Handler) Anonymus() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
 		var payload CreateAnonymusTestRequest
-		json := jsonDecodeAndEncode.NewDecodeAndEncodeJson(r, s.logger, w)
+		json := json.New(r, s.logger, w)
 
-		err := s.handleErrors.LogError(json.DecodeAndValidationBody(&payload), "Failed to decode body", func() {
-			http.Error(w, "Failed to decode body", http.StatusBadRequest)
-		})
+		err := json.DecodeAndValidationBody(&payload)
 		if err != nil {
+			s.logger.Error("Failed to decode body")
+			http.Error(w, "Failed to decode body", http.StatusBadRequest)
 			return
 		}
 
 		testModel := MapCreateAnonymusTestRequestToModel(&payload)
 
-		createTestService := NewCreateTestService(s.db, s.logger)
-		createTestErr := createTestService.CreateTest(testModel)
+		createTestService := NewService(s.db, s.logger)
+		createTestErr := createTestService.Create(testModel)
 
 		if createTestErr != nil {
 			http.Error(w, createTestErr.Error(), http.StatusInternalServerError)
@@ -56,24 +73,35 @@ func (s *createTestHandler) CreateAnonymusTest() http.HandlerFunc {
 	}
 }
 
-func (s *createTestHandler) CreateTest() http.HandlerFunc {
+// CreateTest - обработчик для создания теста
+// @Summary Create a new test
+// @Description Creates a new authenticated test using provided data
+// @Tags create-test
+// @Accept json
+// @Produce json
+// @Param test body CreateTestRequest true "Test Data"
+// @Success 201 {string} string "Test created successfully"
+// @Failure 400 {object} ErrorResponse "Failed to decode body"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /api/createTest [post]
+func (s *Handler) StandartTest() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		var payload CreateTestRequest
-		json := jsonDecodeAndEncode.NewDecodeAndEncodeJson(r, s.logger, w)
+		var payload *CreateTestRequest
+		json := json.New(r, s.logger, w)
 
-		err := s.handleErrors.LogError(json.DecodeAndValidationBody(&payload), "Failed to decode body", func() {
-			http.Error(w, "Failed to decode body", http.StatusBadRequest)
-		})
+		err := json.DecodeAndValidationBody(&payload)
 		if err != nil {
+			s.logger.Error("Failed to decode body")
+			http.Error(w, "Failed to decode body", http.StatusBadRequest)
 			return
 		}
 
-		testModel := MapCreateTestRequestToModel(&payload)
+		testModel := MapCreateTestRequestToModel(payload)
 
-		createTestService := NewCreateTestService(s.db, s.logger)
-		createTestErr := createTestService.CreateTest(testModel)
+		createTestService := NewService(s.db, s.logger)
+		createTestErr := createTestService.Create(testModel)
 
 		if createTestErr != nil {
 			http.Error(w, createTestErr.Error(), http.StatusInternalServerError)

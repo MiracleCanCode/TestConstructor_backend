@@ -1,16 +1,15 @@
-package api
+package server
 
 import (
 	"net/http"
 
-	"github.com/MiracleCanCode/zaperr"
 	"github.com/gorilla/mux"
 	"github.com/server/configs"
 	"github.com/server/internal/auth"
 	"github.com/server/internal/createTest"
 	"github.com/server/internal/getTest"
 	validateresulttest "github.com/server/internal/validateResultTest"
-	"github.com/server/pkg/db"
+	"github.com/server/pkg/db/postgresql"
 	"github.com/server/pkg/middleware"
 	"go.uber.org/zap"
 )
@@ -18,21 +17,19 @@ import (
 type api struct {
 	addr         string
 	router       *mux.Router
-	db           *db.Db
+	db           *postgresql.Db
 	log          *zap.Logger
 	cfg          *configs.Config
-	handleErrors *zaperr.Zaperr
 }
 
-func New(db *db.Db, logger *zap.Logger, cfg *configs.Config, handleErrors *zaperr.Zaperr) *api {
+func New(db *postgresql.Db, logger *zap.Logger, cfg *configs.Config) *api {
 	router := mux.NewRouter()
-	router.Use(middleware.CORSMiddleware)
+	router.Use(middleware.CORS)
 	return &api{
-		addr:         cfg.PORT,
-		router:       router,
-		db:           db,
-		log:          logger,
-		handleErrors: handleErrors,
+		addr:   cfg.PORT,
+		router: router,
+		db:     db,
+		log:    logger,
 	}
 }
 
@@ -42,8 +39,12 @@ func (s *api) RunApp() error {
 }
 
 func (s *api) FillEndpoints() {
-	auth.NewAuthHandler(s.router, s.log, s.db, s.cfg, s.handleErrors)
-	createTest.NewCreateTestHandler(s.log, s.db, s.router, s.handleErrors)
-	getTest.NewGetTestHandler(s.log, s.db, s.router, s.handleErrors)
-	validateresulttest.NewValidateTestHandler(s.db, s.router, s.log)
+	auth.New(s.router, s.log, s.db, s.cfg)
+	createTest.New(s.log, s.db, s.router)
+	getTest.New(s.log, s.db, s.router)
+	validateresulttest.New(s.db, s.router, s.log)
+}
+
+func (s *api) GenerateDocs() {
+
 }

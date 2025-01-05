@@ -2,21 +2,24 @@ package createTest
 
 import (
 	"github.com/server/models"
-	"github.com/server/pkg/db"
+	"github.com/server/pkg/db/postgresql"
 )
 
-type CreateTestRepository struct {
-	db *db.Db
+type IRepository interface {
+	Create(data *models.Test) error
 }
 
-func NewCreateTestRepository(db *db.Db) *CreateTestRepository {
-	return &CreateTestRepository{
+type Repository struct {
+	db *postgresql.Db
+}
+
+func NewRepository(db *postgresql.Db) *Repository {
+	return &Repository{
 		db: db,
 	}
 }
 
-func (s *CreateTestRepository) Create(data *models.Test) error {
-
+func (s *Repository) Create(data *models.Test) error {
 	res := s.db.Create(&data)
 	if res.Error != nil {
 		return res.Error

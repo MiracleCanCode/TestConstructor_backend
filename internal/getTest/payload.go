@@ -2,7 +2,7 @@ package getTest
 
 import "github.com/server/models"
 
-func SetDataToGetAllTestsResponse(tests []models.Test, count int64) *GetAllTestsResponse {
+func SetGetAllTests(tests []models.Test, count int64) *GetAllTestsResponse {
 	return &GetAllTestsResponse{
 		Tests: tests,
 		Count: count,

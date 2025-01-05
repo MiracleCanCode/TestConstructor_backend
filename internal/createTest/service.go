@@ -2,25 +2,25 @@ package createTest
 
 import (
 	"github.com/server/models"
-	"github.com/server/pkg/db"
+	"github.com/server/pkg/db/postgresql"
 	"go.uber.org/zap"
 )
 
-type CreateTestService struct {
-	db         *db.Db
+type Service struct {
+	db         *postgresql.Db
 	logger     *zap.Logger
-	repository *CreateTestRepository
+	repository *Repository
 }
 
-func NewCreateTestService(db *db.Db, logger *zap.Logger) *CreateTestService {
-	return &CreateTestService{
+func NewService(db *postgresql.Db, logger *zap.Logger) *Service {
+	return &Service{
 		db:         db,
 		logger:     logger,
-		repository: NewCreateTestRepository(db),
+		repository: NewRepository(db),
 	}
 }
 
-func (s *CreateTestService) CreateTest(data *models.Test) error {
+func (s *Service) Create(data *models.Test) error {
 	createTest := s.repository.Create(data)
 	if createTest != nil {
 		return createTest

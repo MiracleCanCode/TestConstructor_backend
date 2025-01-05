@@ -1,4 +1,4 @@
-package jsonDecodeAndEncode
+package json
 
 import (
 	"encoding/json"
@@ -14,7 +14,7 @@ type DecodeAndEncodeJson struct {
 	w      http.ResponseWriter
 }
 
-func NewDecodeAndEncodeJson(r *http.Request, log *zap.Logger, w http.ResponseWriter) *DecodeAndEncodeJson {
+func New(r *http.Request, log *zap.Logger, w http.ResponseWriter) *DecodeAndEncodeJson {
 	return &DecodeAndEncodeJson{
 		r:      r,
 		logger: log,

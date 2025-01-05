@@ -3,7 +3,6 @@ package configs
 import (
 	"os"
 
-	"github.com/MiracleCanCode/zaperr"
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 )
@@ -14,10 +13,11 @@ type Config struct {
 	SECRET string
 }
 
-func LoadConfig(log *zap.Logger, handleErrors *zaperr.Zaperr) *Config {
+func Load(log *zap.Logger) *Config {
 
-	handleErrors.LogPanicError(godotenv.Load(".env.local"), "Failed get env file")
-
+	if err := godotenv.Load(".env.local"); err != nil {
+		log.Error("Failed get env file, err:" + err.Error())
+	}
 	db := os.Getenv("DB")
 	port := os.Getenv("PORT")
 	secret := os.Getenv("SECRET")

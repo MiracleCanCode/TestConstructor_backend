@@ -2,19 +2,19 @@ package main
 
 import (
 	"github.com/MiracleCanCode/example_configuration_logger/pkg/logger"
-	"github.com/MiracleCanCode/zaperr"
-	"github.com/server/cmd/api"
 	"github.com/server/configs"
-	"github.com/server/pkg/db"
+	"github.com/server/pkg/db/postgresql"
+	"github.com/server/pkg/server"
 )
 
 func main() {
 	log := logger.Logger(logger.DefaultLoggerConfig())
-	handleErrors := zaperr.NewZaperr(log)
-	conf := configs.LoadConfig(log, handleErrors)
-	db := db.NewDb(conf, log)
-	app := api.New(db, log, conf, handleErrors)
+	conf := configs.Load(log)
+	db := postgresql.New(conf, log)
+	app := server.New(db, log, conf)
 	app.FillEndpoints()
 
-	handleErrors.LogError(app.RunApp(), "")
+	if err := app.RunApp(); err != nil {
+		log.Error("Failed to run server, error:" + err.Error())
+	}
 }

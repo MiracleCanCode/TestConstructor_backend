@@ -1,4 +1,4 @@
-package db
+package postgresql
 
 import (
 	"github.com/server/configs"
@@ -11,7 +11,7 @@ type Db struct {
 	*gorm.DB
 }
 
-func NewDb(conf *configs.Config, log *zap.Logger) *Db {
+func New(conf *configs.Config, log *zap.Logger) *Db {
 	db, err := gorm.Open(postgres.Open(conf.DB), &gorm.Config{})
 
 	if err != nil {

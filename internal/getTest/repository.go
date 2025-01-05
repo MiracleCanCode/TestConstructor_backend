@@ -2,20 +2,25 @@ package getTest
 
 import (
 	"github.com/server/models"
-	"github.com/server/pkg/db"
+	"github.com/server/pkg/db/postgresql"
 )
 
-type GetTestRepository struct {
-	db *db.Db
+type IRepository interface {
+	GetAll(login string, offset, limit int) ([]models.Test, int64, error)
+	GetById(id uint) (*models.Test, error)
 }
 
-func NewGetTestRepository(db *db.Db) *GetTestRepository {
-	return &GetTestRepository{
+type Repository struct {
+	db *postgresql.Db
+}
+
+func NewRepository(db *postgresql.Db) *Repository {
+	return &Repository{
 		db: db,
 	}
 }
 
-func (s *GetTestRepository) GetAllTests(login string, offset, limit int) ([]models.Test, int64, error) {
+func (s *Repository) GetAll(login string, offset, limit int) ([]models.Test, int64, error) {
 	var (
 		tests []models.Test
 		count int64
@@ -35,7 +40,7 @@ func (s *GetTestRepository) GetAllTests(login string, offset, limit int) ([]mode
 	return tests, count, nil
 }
 
-func (s *GetTestRepository) GetTestById(id uint) (*models.Test, error) {
+func (s *Repository) GetById(id uint) (*models.Test, error) {
 	var test models.Test
 
 	err := s.db.Preload("Questions.Variants").First(&test, "id = ?", id).Error

@@ -3,33 +3,30 @@ package auth
 import (
 	"errors"
 
-	"github.com/MiracleCanCode/zaperr"
 	"github.com/server/configs"
-	"github.com/server/pkg/db"
+	"github.com/server/pkg/db/postgresql"
 	"github.com/server/pkg/jwt"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthService struct {
-	db           *db.Db
+type Service struct {
+	db           *postgresql.Db
 	log          *zap.Logger
-	repo         *AuthRepository
+	repo         *Repository
 	cfg          *configs.Config
-	handleErrors *zaperr.Zaperr
 }
 
-func NewAuthService(db *db.Db, log *zap.Logger, cfg *configs.Config, handleErrors *zaperr.Zaperr) *AuthService {
-	return &AuthService{
-		db:           db,
-		log:          log,
-		repo:         NewAuthRepository(db, log, handleErrors),
-		cfg:          cfg,
-		handleErrors: handleErrors,
+func NewService(db *postgresql.Db, log *zap.Logger, cfg *configs.Config) *Service {
+	return &Service{
+		db:   db,
+		log:  log,
+		repo: NewRepository(db, log),
+		cfg:  cfg,
 	}
 }
 
-func (s *AuthService) Login(data *LoginRequest) (*LoginResponse, error) {
+func (s *Service) Login(data *LoginRequest) (*LoginResponse, error) {
 	if data.Login == "" || data.Password == "" {
 		return nil, errors.New("login or password cannot be empty")
 	}
@@ -71,7 +68,7 @@ func (s *AuthService) Login(data *LoginRequest) (*LoginResponse, error) {
 	}, nil
 }
 
-func (s *AuthService) Registration(data *RegistrationRequest) (*RegistrationResponse, error) {
+func (s *Service) Registration(data *RegistrationRequest) (*RegistrationResponse, error) {
 	if data.Email == "" || data.Login == "" || data.Password == "" || data.Name == "" {
 		return nil, errors.New("exist fields name, login, password, email")
 	}

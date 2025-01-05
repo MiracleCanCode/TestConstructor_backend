@@ -1,30 +1,35 @@
 package auth
 
 import (
-	"github.com/MiracleCanCode/zaperr"
 	"github.com/server/models"
-	"github.com/server/pkg/db"
+	"github.com/server/pkg/db/postgresql"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type AuthRepository struct {
-	db           *db.Db
-	logger       *zap.Logger
-	handleErrors *zaperr.Zaperr
+type IRepository interface {
+	CreateUser(user models.User) error
+	GetUserByLogin(login string) (*models.User, error)
+	SaveRefreshToken(login string, token string) error
 }
 
-func NewAuthRepository(db *db.Db, logger *zap.Logger, handleErrors *zaperr.Zaperr) *AuthRepository {
-	return &AuthRepository{
-		db:           db,
-		logger:       logger,
-		handleErrors: handleErrors,
+type Repository struct {
+	db     *postgresql.Db
+	logger *zap.Logger
+}
+
+func NewRepository(db *postgresql.Db, logger *zap.Logger) *Repository {
+	return &Repository{
+		db:     db,
+		logger: logger,
 	}
 }
 
-func (s *AuthRepository) CreateUser(user models.User) error {
+func (s *Repository) CreateUser(user models.User) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	s.handleErrors.LogError(err, string(err.Error()))
+	if err != nil {
+		return err
+	}
 	user.Password = string(hashedPassword)
 
 	result := s.db.Create(&user)
@@ -36,7 +41,7 @@ func (s *AuthRepository) CreateUser(user models.User) error {
 	return nil
 }
 
-func (s *AuthRepository) GetUserByLogin(login string) (*models.User, error) {
+func (s *Repository) GetUserByLogin(login string) (*models.User, error) {
 
 	var user models.User
 	result := s.db.Where("login = ?", login).First(&user)
@@ -47,7 +52,7 @@ func (s *AuthRepository) GetUserByLogin(login string) (*models.User, error) {
 	return &user, nil
 }
 
-func (s *AuthRepository) SaveRefreshToken(login string, token string) error {
+func (s *Repository) SaveRefreshToken(login string, token string) error {
 	var user models.User
 	result := s.db.Where("login = ?", login).First(&user)
 	if result.Error != nil {
@@ -57,7 +62,9 @@ func (s *AuthRepository) SaveRefreshToken(login string, token string) error {
 	user.RefreshToken = token
 	updateResult := s.db.Save(&user)
 
-	s.handleErrors.LogError(updateResult.Error, string(updateResult.Error.Error()))
+	if err := updateResult.Error; err != nil {
+		s.logger.Error(string(updateResult.Error.Error()))
+	}
 
 	return nil
 }
