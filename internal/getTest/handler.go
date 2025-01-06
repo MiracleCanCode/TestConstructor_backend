@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/server/pkg/db/postgresql"
 	"github.com/server/pkg/json"
+	mapjson "github.com/server/pkg/mapJson"
 	"go.uber.org/zap"
 )
 
@@ -35,10 +36,11 @@ func (s *Handler) GetAll() http.HandlerFunc {
 			payload *GetAllTestsRequest
 		)
 		decoderAndEncoder := json.New(r, s.logger, w)
+		jsonError := mapjson.New(s.logger, w, r)
 
 		if err := decoderAndEncoder.Decode(&payload); err != nil {
 			s.logger.Error("Failed to decode data")
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			jsonError.JsonError(err.Error())
 
 			return
 		}
@@ -46,7 +48,7 @@ func (s *Handler) GetAll() http.HandlerFunc {
 		getTests, count, err := s.service.GetAll(payload.Login, payload.Limit, payload.Offset)
 		if err != nil {
 			s.logger.Error("Failed to get tests")
-			http.Error(w, "Failed to get tests: "+err.Error(), http.StatusInternalServerError)
+			jsonError.JsonError("Failed to get tests: "+err.Error())
 
 			return
 		}
@@ -54,7 +56,7 @@ func (s *Handler) GetAll() http.HandlerFunc {
 
 		if err := decoderAndEncoder.Encode(http.StatusOK, tests); err != nil {
 			s.logger.Error("Failed to encode data")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			jsonError.JsonError(err.Error())
 			return
 		}
 	}
@@ -65,6 +67,7 @@ func (s *Handler) GetById() http.HandlerFunc {
 		defer r.Body.Close()
 
 		decoderAndEncoder := json.New(r, s.logger, w)
+		jsonError := mapjson.New(s.logger, w, r)
 
 		id := mux.Vars(r)["id"]
 		parseId, err := strconv.ParseUint(id, 10, 64)
@@ -75,13 +78,14 @@ func (s *Handler) GetById() http.HandlerFunc {
 		getTest, err := s.service.GetById(uint(parseId))
 		if err != nil {
 			s.logger.Error("Failed to get test")
-			http.Error(w, "Failed to get test: "+err.Error(), http.StatusInternalServerError)
+			jsonError.JsonError("Failed to get test: "+err.Error())
+
 			return
 		}
 
 		if err := decoderAndEncoder.Encode(http.StatusOK, getTest); err != nil {
 			s.logger.Error("Failed to encode data")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			jsonError.JsonError( err.Error())
 			return
 		}
 	}

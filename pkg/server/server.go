@@ -4,13 +4,14 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"github.com/server/configs"
 	"github.com/server/internal/auth"
 	"github.com/server/internal/createTest"
 	"github.com/server/internal/getTest"
+	"github.com/server/internal/user"
 	validateresulttest "github.com/server/internal/validateResultTest"
 	"github.com/server/pkg/db/postgresql"
-	"github.com/server/pkg/middleware"
 	"go.uber.org/zap"
 )
 
@@ -24,7 +25,7 @@ type api struct {
 
 func New(db *postgresql.Db, logger *zap.Logger, cfg *configs.Config) *api {
 	router := mux.NewRouter()
-	router.Use(middleware.CORS)
+	
 	return &api{
 		addr:   cfg.PORT,
 		router: router,
@@ -34,8 +35,17 @@ func New(db *postgresql.Db, logger *zap.Logger, cfg *configs.Config) *api {
 }
 
 func (s *api) RunApp() error {
+	corsOptions := cors.Options{
+		AllowedOrigins: []string{"*"}, 
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders: []string{"Authorization", "Content-Type", "X-Requested-With"},
+		AllowCredentials: false,  
+	}
+	
+
+	corsHandler := cors.New(corsOptions).Handler(s.router)
 	s.log.Sugar().Infof("Server run on http://localhost" + s.addr)
-	return http.ListenAndServe(s.addr, s.router)
+	return http.ListenAndServe(s.addr, corsHandler)
 }
 
 func (s *api) FillEndpoints() {
@@ -43,8 +53,5 @@ func (s *api) FillEndpoints() {
 	createTest.New(s.log, s.db, s.router)
 	getTest.New(s.log, s.db, s.router)
 	validateresulttest.New(s.db, s.router, s.log)
-}
-
-func (s *api) GenerateDocs() {
-
+	user.New(s.log, s.db, s.router)
 }

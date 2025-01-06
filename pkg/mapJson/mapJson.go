@@ -25,6 +25,7 @@ func New(logger *zap.Logger,
 
 func (s *MessageResponse) JsonError(message string) {
 	json := json.New(s.r, s.logger, s.w)
+	s.w.WriteHeader(http.StatusBadRequest)
 
 	jsonMap := map[string]string{
 		"error": message,
@@ -38,6 +39,24 @@ func (s *MessageResponse) JsonError(message string) {
 	}
 
 	s.w.Header().Set("Content-Type", "application/json")
-	s.w.WriteHeader(http.StatusBadRequest)
+	s.w.Write(dataMarshaled)
+}
+
+func (s *MessageResponse) JsonSuccess(message string) {
+	json := json.New(s.r, s.logger, s.w)
+	s.w.WriteHeader(http.StatusAccepted)
+
+	jsonMap := map[string]string{
+		"success": message,
+	}
+
+	dataMarshaled, err := json.Marshall(jsonMap)
+	if err != nil {
+		s.logger.Error("Failed to marshal success response", zap.Error(err))
+		http.Error(s.w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	s.w.Header().Set("Content-Type", "application/json")
 	s.w.Write(dataMarshaled)
 }

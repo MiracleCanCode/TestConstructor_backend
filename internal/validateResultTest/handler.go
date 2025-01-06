@@ -2,11 +2,13 @@ package validateresulttest
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/server/internal/getTest"
 	"github.com/server/pkg/db/postgresql"
 	"github.com/server/pkg/json"
+	mapjson "github.com/server/pkg/mapJson"
 	"go.uber.org/zap"
 )
 
@@ -56,23 +58,21 @@ func (s *Handler) ValidateResult() http.HandlerFunc {
 
 		var payload *RequestPayload
 		jsonDecodeAndEncode := json.New(r, s.logger, w)
+		jsonResponse := mapjson.New(s.logger, w, r)
 		if err := jsonDecodeAndEncode.Decode(&payload); err != nil {
 			s.logger.Error("Failed to decode body: " + err.Error())
-			http.Error(w, "Invalid request payload", http.StatusBadRequest)
+			jsonResponse.JsonError("Invalid request payload")
 			return
 		}
 		result, err := s.service.Validate(payload.Test)
 		if err != nil {
 			s.logger.Error("Validation failed: " + err.Error())
-			http.Error(w, "Failed to validate test", http.StatusInternalServerError)
+			jsonResponse.JsonError("Failed to validate test")
 			return
 		}
 
-		if err := jsonDecodeAndEncode.Encode(http.StatusOK, result); err != nil {
-			s.logger.Error("Failed to encode response: " + err.Error())
-			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-			return
-		}
+		jsonResponse.JsonSuccess("percents: " + strconv.FormatFloat(*result, 'f', 2, 64))
+
 	}
 }
 
