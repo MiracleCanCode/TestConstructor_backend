@@ -7,8 +7,7 @@ import (
 	"github.com/rs/cors"
 	"github.com/server/configs"
 	"github.com/server/internal/auth"
-	"github.com/server/internal/createTest"
-	"github.com/server/internal/getTest"
+	"github.com/server/internal/test"
 	"github.com/server/internal/user"
 	validateresulttest "github.com/server/internal/validateResultTest"
 	"github.com/server/pkg/db/postgresql"
@@ -50,8 +49,7 @@ func (s *api) RunApp() error {
 
 func (s *api) FillEndpoints() {
 	auth.New(s.router, s.log, s.db, s.cfg)
-	createTest.New(s.log, s.db, s.router)
-	getTest.New(s.log, s.db, s.router)
+	test.New(s.log, s.db, s.router)
 	validateresulttest.New(s.db, s.router, s.log)
 	user.New(s.log, s.db, s.router)
 }

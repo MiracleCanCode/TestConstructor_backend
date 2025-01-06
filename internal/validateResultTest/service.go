@@ -1,7 +1,7 @@
 package validateresulttest
 
 import (
-	"github.com/server/internal/getTest"
+	"github.com/server/internal/test"
 	"github.com/server/models"
 	"github.com/server/pkg/db/postgresql"
 	"go.uber.org/zap"
@@ -9,11 +9,11 @@ import (
 
 type Service struct {
 	db             *postgresql.Db
-	getTestService *getTest.Service
+	getTestService *test.Service
 	logger         *zap.Logger
 }
 
-func NewService(db *postgresql.Db, logger *zap.Logger, service *getTest.Service) *Service {
+func NewService(db *postgresql.Db, logger *zap.Logger, service *test.Service) *Service {
 	return &Service{
 		db:             db,
 		logger:         logger,

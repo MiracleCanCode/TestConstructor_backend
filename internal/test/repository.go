@@ -1,4 +1,4 @@
-package getTest
+package test
 
 import (
 	"github.com/server/models"
@@ -49,4 +49,13 @@ func (s *Repository) GetById(id uint) (*models.Test, error) {
 	}
 
 	return &test, nil
+}
+
+func (s *Repository) Create(data *models.Test) error {
+	res := s.db.Create(&data)
+	if res.Error != nil {
+		return res.Error
+	}
+
+	return nil
 }

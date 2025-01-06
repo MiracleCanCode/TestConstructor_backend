@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/server/configs"
+	"github.com/server/internal/user"
 	"github.com/server/pkg/db/postgresql"
 	"github.com/server/pkg/jwt"
 	"go.uber.org/zap"
@@ -15,14 +16,16 @@ type Service struct {
 	log          *zap.Logger
 	repo         *Repository
 	cfg          *configs.Config
+	userRepo *user.Repository
 }
 
-func NewService(db *postgresql.Db, log *zap.Logger, cfg *configs.Config) *Service {
+func NewService(db *postgresql.Db, log *zap.Logger, cfg *configs.Config, userRepo *user.Repository) *Service {
 	return &Service{
 		db:   db,
 		log:  log,
 		repo: NewRepository(db, log),
 		cfg:  cfg,
+		userRepo: userRepo,
 	}
 }
 
@@ -33,7 +36,7 @@ func (s *Service) Login(data *LoginRequest) (*LoginResponse, error) {
 
 	newJwt := jwt.NewJwt("supersecretkeybysuperuser")
 
-	user, err := s.repo.GetUserByLogin(data.Login)
+	user, err := s.userRepo.GetByLogin(data.Login)
 	if err != nil {
 		s.log.Error("Failed to fetch user", zap.Error(err))
 		return nil, errors.New("user not found")
@@ -73,10 +76,10 @@ func (s *Service) Registration(data *RegistrationRequest) (*RegistrationResponse
 		return nil, errors.New("exist fields name, login, password, email")
 	}
 
-	if err := s.repo.CreateUser(data.ToUser()); err != nil {
+	if err := s.userRepo.Create(data.ToUser()); err != nil {
 		s.log.Error("Failed register user")
 		return nil, errors.New("failed register")
-	}
+	}	
 
 	return &RegistrationResponse{}, nil
 

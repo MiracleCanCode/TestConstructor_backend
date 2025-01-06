@@ -5,6 +5,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/server/configs"
+	"github.com/server/internal/user"
 	"github.com/server/pkg/db/postgresql"
 	"github.com/server/pkg/json"
 	mapjson "github.com/server/pkg/mapJson"
@@ -16,41 +17,25 @@ type Handler struct {
 	db      *postgresql.Db
 	cfg     *configs.Config
 	service *Service
+	userRepo *user.Repository
 }
 
-// NewAuthHandler создаёт новый обработчик аутентификации
-// @Summary Initialize auth routes
-// @Description Set up routes for login and registration
-// @Tags auth
-// @Param router path string true "Router"
-// @Param log path string true "Logger"
-// @Param db path string true "Database"
-// @Param cfg path string true "Configuration"
-// @Param handleErrors path string true "Error handler"
-// @Success 200 {object} string "Routes initialized successfully"
+
 func New(router *mux.Router, log *zap.Logger, db *postgresql.Db, cfg *configs.Config) {
+	service := NewService(db, log, cfg, user.NewRepository(db, log))
 	handler := &Handler{
 		log:     log,
 		db:      db,
 		cfg:     cfg,
-		service: NewService(db, log, cfg),
+		service: service,
+		userRepo: user.NewRepository(db, log),
 	}
 
-	router.HandleFunc("/api/login", handler.Login()).Methods("POST")
-	router.HandleFunc("/api/registration", handler.Registration()).Methods("POST")
+	router.HandleFunc("/api/auth/login", handler.Login()).Methods("POST")
+	router.HandleFunc("/api/auth/registration", handler.Registration()).Methods("POST")
 }
 
-// Login - обработчик для аутентификации пользователя
-// @Summary Login to the system
-// @Description Authenticates the user with login and password
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param loginRequest body LoginRequest true "Login Request"
-// @Success 200 {object} LoginResponse "User data"
-// @Failure 400 {object} ErrorResponse "Invalid request payload"
-// @Failure 401 {object} ErrorResponse "Invalid credentials"
-// @Router /api/login [post]
+
 func (h *Handler) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
@@ -80,17 +65,7 @@ func (h *Handler) Login() http.HandlerFunc {
 	}
 }
 
-// Registration - обработчик для регистрации нового пользователя
-// @Summary Register a new user
-// @Description Registers a new user with a unique login and password
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param registrationRequest body RegistrationRequest true "Registration Request"
-// @Success 200 {object} RegistrationResponse "User data"
-// @Failure 400 {object} ErrorResponse "Invalid request payload or login already taken"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Router /api/registration [post]
+
 func (h *Handler) Registration() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
@@ -105,7 +80,7 @@ func (h *Handler) Registration() http.HandlerFunc {
 			return
 		}
 
-		findUserByLogin, err := h.service.repo.GetUserByLogin(payload.Login)
+		findUserByLogin, err := h.userRepo.GetByLogin(payload.Login)
 		if err == nil && findUserByLogin != nil {
 			message.JsonError("Login is already taken")
 			h.log.Warn("User login is already taken", zap.String("login", payload.Login), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))

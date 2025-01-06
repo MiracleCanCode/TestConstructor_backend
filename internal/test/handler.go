@@ -1,4 +1,4 @@
-package getTest
+package test
 
 import (
 	"net/http"
@@ -24,8 +24,8 @@ func New(logger *zap.Logger, db *postgresql.Db, router *mux.Router) {
 		service: NewService(db, logger, NewRepository(db)),
 	}
 
-	router.HandleFunc("/api/getTestById/{id}", handler.GetById()).Methods("GET")
-	router.HandleFunc("/api/getAllTests", handler.GetAll()).Methods("POST")
+	router.HandleFunc("/api/test/getById/{id}", handler.GetById()).Methods("GET")
+	router.HandleFunc("/api/test/getAll", handler.GetAll()).Methods("POST")
 }
 
 func (s *Handler) GetAll() http.HandlerFunc {
@@ -88,5 +88,64 @@ func (s *Handler) GetById() http.HandlerFunc {
 			jsonError.JsonError( err.Error())
 			return
 		}
+	}
+}
+
+func (s *Handler) AnonymousTest() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		var payload CreateAnonymusTestRequest
+		json := json.New(r, s.logger, w)
+		jsonError := mapjson.New(s.logger, w, r)
+
+		err := json.DecodeAndValidationBody(&payload)
+		if err != nil {
+			s.logger.Error("Failed to decode body")
+			jsonError.JsonError("Failed to decode body")
+			return
+		}
+
+		testModel := MapCreateAnonymusTestRequestToModel(&payload)
+
+		
+		err = s.service.Create(testModel)
+
+		if err != nil {
+			jsonError.JsonError(err.Error())
+			return
+		}
+
+		jsonError.JsonSuccess("Test created successfully")
+	}
+}
+
+
+func (s *Handler) StandardTest() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		var payload CreateTestRequest
+		json := json.New(r, s.logger, w)
+		jsonError := mapjson.New(s.logger, w, r)
+
+		err := json.DecodeAndValidationBody(&payload)
+		if err != nil {
+			s.logger.Error("Failed to decode body")
+			jsonError.JsonError("Failed to decode body:" + err.Error())
+			return
+		}
+
+		testModel := MapCreateTestRequestToModel(&payload)
+
+		
+		err = s.service.Create(testModel)
+
+		if err != nil {
+			jsonError.JsonError(err.Error())
+			return
+		}
+
+		jsonError.JsonSuccess("Test created successfully")
 	}
 }
