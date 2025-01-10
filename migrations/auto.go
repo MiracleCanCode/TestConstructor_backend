@@ -17,5 +17,8 @@ func main() {
 		return
 	}
 
-	db.AutoMigrate(&models.User{}, &models.Test{}, &models.Question{}, &models.Variant{})
+	if err := db.AutoMigrate(&models.User{}, &models.Test{}, &models.Question{}, &models.Variant{}); err != nil {
+		log.Error("Error migration, error:" + err.Error())
+		return
+	}
 }

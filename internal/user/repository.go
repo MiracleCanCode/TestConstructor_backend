@@ -14,13 +14,13 @@ type IRepository interface {
 }
 
 type Repository struct {
-	db *postgresql.Db
+	db     *postgresql.Db
 	logger *zap.Logger
 }
 
 func NewRepository(db *postgresql.Db, logger *zap.Logger) *Repository {
 	return &Repository{
-		db: db,
+		db:     db,
 		logger: logger,
 	}
 }
@@ -36,7 +36,7 @@ func (s *Repository) Update(user *UpdateRequest) error {
 	}
 
 	if len(updateData) == 0 {
-		return nil 
+		return nil
 	}
 
 	if err := s.db.Model(&models.User{}).Where("login = ?", user.UserLogin).Updates(updateData).Error; err != nil {

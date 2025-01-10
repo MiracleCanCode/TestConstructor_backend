@@ -1,5 +1,4 @@
-package test
-
+package testmanager
 
 import "github.com/server/models"
 
@@ -73,7 +72,6 @@ type GetAllTestsResponse struct {
 type GetTestByIdResponse struct {
 	models.Test
 }
-
 
 type CreateTestRequest struct {
 	Name        string                `json:"name" validate:"required"`

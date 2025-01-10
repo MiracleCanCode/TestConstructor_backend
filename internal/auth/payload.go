@@ -24,11 +24,11 @@ type LoginRequest struct {
 
 type RegistrationResponse struct {
 	Name         string  `json:"name"`
-    Login        string  `json:"login"  `
-    Password     string  `json:"password"`
-    Avatar       *string `json:"avatar"`
-    Email        string  `json:"email" `
-    RefreshToken string  `json:"refresh_token" `
+	Login        string  `json:"login"  `
+	Password     string  `json:"password"`
+	Avatar       *string `json:"avatar"`
+	Email        string  `json:"email" `
+	RefreshToken string  `json:"refresh_token" `
 }
 
 type RegistrationRequest struct {

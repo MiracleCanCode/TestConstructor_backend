@@ -9,19 +9,19 @@ import (
 
 type MessageResponse struct {
 	logger *zap.Logger
-	w http.ResponseWriter
-	r *http.Request
+	w      http.ResponseWriter
+	r      *http.Request
 }
 
 func New(logger *zap.Logger,
 	w http.ResponseWriter,
 	r *http.Request) *MessageResponse {
-		return &MessageResponse{
-			w: w,
-			logger: logger,
-			r: r,
-		}
+	return &MessageResponse{
+		w:      w,
+		logger: logger,
+		r:      r,
 	}
+}
 
 func (s *MessageResponse) JsonError(message string) {
 	json := json.New(s.r, s.logger, s.w)
@@ -39,7 +39,11 @@ func (s *MessageResponse) JsonError(message string) {
 	}
 
 	s.w.Header().Set("Content-Type", "application/json")
-	s.w.Write(dataMarshaled)
+	_, err = s.w.Write(dataMarshaled)
+	if err != nil {
+		s.logger.Error("Error write data, error:" + err.Error())
+		return
+	}
 }
 
 func (s *MessageResponse) JsonSuccess(message string) {
@@ -58,5 +62,9 @@ func (s *MessageResponse) JsonSuccess(message string) {
 	}
 
 	s.w.Header().Set("Content-Type", "application/json")
-	s.w.Write(dataMarshaled)
+	_, err = s.w.Write(dataMarshaled)
+	if err != nil {
+		s.logger.Error("Error write data, error:" + err.Error())
+		return
+	}
 }

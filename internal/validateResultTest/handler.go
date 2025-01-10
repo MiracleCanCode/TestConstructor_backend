@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/server/internal/test"
 	"github.com/server/pkg/db/postgresql"
 	"github.com/server/pkg/json"
 	mapjson "github.com/server/pkg/mapJson"
@@ -24,12 +23,11 @@ func New(db *postgresql.Db, router *mux.Router, logger *zap.Logger) {
 		db:      db,
 		router:  router,
 		logger:  logger,
-		service: NewService(db, logger, test.NewService(db, logger, test.NewRepository(db))),
+		service: NewService(db, logger),
 	}
 
 	handler.router.HandleFunc("/api/test/validate", handler.ValidateResult()).Methods("POST")
 }
-
 
 func (s *Handler) ValidateResult() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +49,5 @@ func (s *Handler) ValidateResult() http.HandlerFunc {
 		}
 
 		jsonResponse.JsonSuccess("percents: " + strconv.FormatFloat(*result, 'f', 2, 64))
-
 	}
 }
-

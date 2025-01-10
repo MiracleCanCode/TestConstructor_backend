@@ -20,11 +20,10 @@ func Load(log *zap.Logger) *Config {
 	}
 	db := os.Getenv("DB")
 	port := os.Getenv("PORT")
-	secret := os.Getenv("SECRET")
 
 	return &Config{
 		DB:     db,
 		PORT:   port,
-		SECRET: secret,
+		SECRET: "SUPERSECRETKEYFORBESTAPPINTHEWORLD",
 	}
 }

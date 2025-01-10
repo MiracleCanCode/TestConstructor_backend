@@ -7,7 +7,7 @@ import (
 	"github.com/rs/cors"
 	"github.com/server/configs"
 	"github.com/server/internal/auth"
-	"github.com/server/internal/test"
+	testmanager "github.com/server/internal/testmanager"
 	"github.com/server/internal/user"
 	validateresulttest "github.com/server/internal/validateResultTest"
 	"github.com/server/pkg/db/postgresql"
@@ -15,16 +15,16 @@ import (
 )
 
 type api struct {
-	addr         string
-	router       *mux.Router
-	db           *postgresql.Db
-	log          *zap.Logger
-	cfg          *configs.Config
+	addr   string
+	router *mux.Router
+	db     *postgresql.Db
+	log    *zap.Logger
+	cfg    *configs.Config
 }
 
 func New(db *postgresql.Db, logger *zap.Logger, cfg *configs.Config) *api {
 	router := mux.NewRouter()
-	
+
 	return &api{
 		addr:   cfg.PORT,
 		router: router,
@@ -35,12 +35,11 @@ func New(db *postgresql.Db, logger *zap.Logger, cfg *configs.Config) *api {
 
 func (s *api) RunApp() error {
 	corsOptions := cors.Options{
-		AllowedOrigins: []string{"*"}, 
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders: []string{"Authorization", "Content-Type", "X-Requested-With"},
-		AllowCredentials: false,  
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type", "X-Requested-With"},
+		AllowCredentials: false,
 	}
-	
 
 	corsHandler := cors.New(corsOptions).Handler(s.router)
 	s.log.Sugar().Infof("Server run on http://localhost" + s.addr)
@@ -49,7 +48,7 @@ func (s *api) RunApp() error {
 
 func (s *api) FillEndpoints() {
 	auth.New(s.router, s.log, s.db, s.cfg)
-	test.New(s.log, s.db, s.router)
+	testmanager.New(s.log, s.db, s.router)
 	validateresulttest.New(s.db, s.router, s.log)
-	user.New(s.log, s.db, s.router)
+	user.New(s.log, s.db, s.router, s.cfg)
 }

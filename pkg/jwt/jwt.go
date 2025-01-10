@@ -1,9 +1,13 @@
 package jwt
 
 import (
+	"errors"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/server/configs"
 )
 
 type JWT struct {
@@ -16,35 +20,21 @@ func NewJwt(secret string) *JWT {
 	}
 }
 
-func (s *JWT) CreateAccessToken(login string) (string, error) {
+func (s *JWT) createToken(login string, duration time.Duration) (string, error) {
 	claims := jwt.MapClaims{
 		"login": login,
-		"exp":   time.Now().Add(time.Hour * 24).Unix(),
+		"exp":   time.Now().Add(duration).Unix(),
 	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	signedToken, err := token.SignedString([]byte(s.Secret))
-	if err != nil {
-		return "", err
-	}
+	return token.SignedString([]byte(s.Secret))
+}
 
-	return signedToken, nil
+func (s *JWT) CreateAccessToken(login string) (string, error) {
+	return s.createToken(login, time.Hour*24)
 }
 
 func (s *JWT) CreateRefreshToken(login string) (string, error) {
-	claims := jwt.MapClaims{
-		"login": login,
-		"exp":   time.Now().Add(time.Hour * 24 * 7).Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	signedToken, err := token.SignedString([]byte(s.Secret))
-	if err != nil {
-		return "", err
-	}
-
-	return signedToken, nil
+	return s.createToken(login, time.Hour*24*7)
 }
 
 func (s *JWT) VerifyToken(tokenString string) (*jwt.Token, jwt.MapClaims, error) {
@@ -65,4 +55,21 @@ func (s *JWT) VerifyToken(tokenString string) (*jwt.Token, jwt.MapClaims, error)
 	}
 
 	return token, claims, nil
+}
+
+func ExtractUserFromAuthHeader(r *http.Request, cfg *configs.Config) (string, error) {
+	authHeader := r.Header.Get("Authorization")
+	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+	_, claims, err := NewJwt(cfg.SECRET).VerifyToken(tokenString)
+	if err != nil {
+		return "", err
+	}
+
+	userLogin, ok := claims["login"].(string)
+	if !ok {
+		return "", errors.New("invalid login claim type")
+	}
+
+	return userLogin, nil
 }

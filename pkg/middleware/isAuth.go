@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func IsAuthMiddleware(next http.Handler) http.HandlerFunc {
+func IsAuth(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		token := strings.TrimPrefix(authHeader, "Bearer ")

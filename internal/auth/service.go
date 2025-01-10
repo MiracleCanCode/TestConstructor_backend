@@ -12,19 +12,19 @@ import (
 )
 
 type Service struct {
-	db           *postgresql.Db
-	log          *zap.Logger
-	repo         *Repository
-	cfg          *configs.Config
+	db       *postgresql.Db
+	log      *zap.Logger
+	repo     *Repository
+	cfg      *configs.Config
 	userRepo *user.Repository
 }
 
 func NewService(db *postgresql.Db, log *zap.Logger, cfg *configs.Config, userRepo *user.Repository) *Service {
 	return &Service{
-		db:   db,
-		log:  log,
-		repo: NewRepository(db, log),
-		cfg:  cfg,
+		db:       db,
+		log:      log,
+		repo:     NewRepository(db, log),
+		cfg:      cfg,
 		userRepo: userRepo,
 	}
 }
@@ -34,7 +34,7 @@ func (s *Service) Login(data *LoginRequest) (*LoginResponse, error) {
 		return nil, errors.New("login or password cannot be empty")
 	}
 
-	newJwt := jwt.NewJwt("supersecretkeybysuperuser")
+	newJwt := jwt.NewJwt("SUPERSECRETKEYFORBESTAPPINTHEWORLD")
 
 	user, err := s.userRepo.GetByLogin(data.Login)
 	if err != nil {
@@ -79,7 +79,7 @@ func (s *Service) Registration(data *RegistrationRequest) (*RegistrationResponse
 	if err := s.userRepo.Create(data.ToUser()); err != nil {
 		s.log.Error("Failed register user")
 		return nil, errors.New("failed register")
-	}	
+	}
 
 	return &RegistrationResponse{}, nil
 

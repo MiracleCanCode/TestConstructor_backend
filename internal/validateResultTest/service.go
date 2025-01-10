@@ -1,7 +1,7 @@
 package validateresulttest
 
 import (
-	"github.com/server/internal/test"
+	"github.com/server/internal/testmanager"
 	"github.com/server/models"
 	"github.com/server/pkg/db/postgresql"
 	"go.uber.org/zap"
@@ -9,15 +9,14 @@ import (
 
 type Service struct {
 	db             *postgresql.Db
-	getTestService *test.Service
+	getTestService *testmanager.Service
 	logger         *zap.Logger
 }
 
-func NewService(db *postgresql.Db, logger *zap.Logger, service *test.Service) *Service {
+func NewService(db *postgresql.Db, logger *zap.Logger) *Service {
 	return &Service{
-		db:             db,
-		logger:         logger,
-		getTestService: service,
+		db:     db,
+		logger: logger,
 	}
 }
 
@@ -30,7 +29,7 @@ func (s *Service) Validate(test *models.Test) (*float64, error) {
 
 	var (
 		totalCorrect int
-	 	totalAnswers int
+		totalAnswers int
 	)
 
 	for _, question := range exampleTest.Questions {

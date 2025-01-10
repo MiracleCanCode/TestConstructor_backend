@@ -1,4 +1,4 @@
-package test
+package testmanager
 
 import (
 	"github.com/server/models"
