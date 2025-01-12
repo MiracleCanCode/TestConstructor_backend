@@ -1,28 +1,29 @@
-package auth
+package repository
 
 import (
+	"github.com/server/internal/utils/db/postgresql"
 	"github.com/server/models"
-	"github.com/server/pkg/db/postgresql"
+
 	"go.uber.org/zap"
 )
 
-type IRepository interface {
+type IAuth interface {
 	SaveRefreshToken(login string, token string) error
 }
 
-type Repository struct {
+type Auth struct {
 	db     *postgresql.Db
 	logger *zap.Logger
 }
 
-func NewRepository(db *postgresql.Db, logger *zap.Logger) *Repository {
-	return &Repository{
+func NewAuth(db *postgresql.Db, logger *zap.Logger) *Auth {
+	return &Auth{
 		db:     db,
 		logger: logger,
 	}
 }
 
-func (s *Repository) SaveRefreshToken(login string, token string) error {
+func (s *Auth) SaveRefreshToken(login string, token string) error {
 	var user models.User
 	result := s.db.Where("login = ?", login).First(&user)
 	if result.Error != nil {

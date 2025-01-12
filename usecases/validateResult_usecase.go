@@ -1,27 +1,27 @@
-package validateresulttest
+package usecases
 
 import (
-	"github.com/server/internal/testmanager"
+	"github.com/server/internal/utils/db/postgresql"
 	"github.com/server/models"
-	"github.com/server/pkg/db/postgresql"
 	"go.uber.org/zap"
 )
 
-type Service struct {
+type ValidateResult struct {
 	db             *postgresql.Db
-	getTestService *testmanager.Service
+	getTestService *TestManager
 	logger         *zap.Logger
 }
 
-func NewService(db *postgresql.Db, logger *zap.Logger) *Service {
-	return &Service{
-		db:     db,
-		logger: logger,
+func NewValidateResult(db *postgresql.Db, logger *zap.Logger) *ValidateResult {
+	return &ValidateResult{
+		db:             db,
+		logger:         logger,
+		getTestService: NewTestManager(db, logger),
 	}
 }
 
-func (s *Service) Validate(test *models.Test) (*float64, error) {
-	exampleTest, err := s.getTestService.GetById(test.ID)
+func (s *ValidateResult) Validate(test *models.Test) (*float64, error) {
+	exampleTest, err := s.getTestService.GetTestById(test.ID)
 	if err != nil {
 		s.logger.Error("Failed to get test by id, error: " + err.Error())
 		return nil, err

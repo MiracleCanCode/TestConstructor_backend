@@ -1,4 +1,4 @@
-package user
+package http
 
 import (
 	"net/http"
@@ -6,36 +6,38 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/server/configs"
-	"github.com/server/pkg/db/postgresql"
-	"github.com/server/pkg/json"
-	"github.com/server/pkg/jwt"
-	mapjson "github.com/server/pkg/mapJson"
-	"github.com/server/pkg/middleware"
+	"github.com/server/dtos"
+	"github.com/server/internal/utils/db/postgresql"
+	"github.com/server/internal/utils/json"
+	"github.com/server/internal/utils/jwt"
+	mapjson "github.com/server/internal/utils/mapJson"
+	"github.com/server/internal/utils/middleware"
+	"github.com/server/repository"
 	"go.uber.org/zap"
 )
 
-type Handler struct {
+type User struct {
 	logger     *zap.Logger
 	db         *postgresql.Db
 	router     *mux.Router
-	repository *Repository
+	repository *repository.User
 	cfg        *configs.Config
 }
 
-func New(logger *zap.Logger, db *postgresql.Db, router *mux.Router, cfg *configs.Config) {
-	handler := &Handler{
+func NewUser(logger *zap.Logger, db *postgresql.Db, router *mux.Router, cfg *configs.Config) {
+	handler := &User{
 		logger:     logger,
 		db:         db,
 		router:     router,
-		repository: NewRepository(db, logger),
+		repository: repository.NewUser(db, logger),
 		cfg:        cfg,
 	}
 
-	router.HandleFunc("/api/user/getData", middleware.IsAuth(handler.GetData())).Methods("GET")
-	router.HandleFunc("/api/user/update", middleware.IsAuth(handler.Update())).Methods("POST")
+	router.HandleFunc("/api/user/getData", middleware.IsAuth(handler.GetUserData())).Methods("GET")
+	router.HandleFunc("/api/user/update", middleware.IsAuth(handler.UpdateUser())).Methods("POST")
 }
 
-func (s *Handler) GetData() http.HandlerFunc {
+func (s *User) GetUserData() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
@@ -52,7 +54,7 @@ func (s *Handler) GetData() http.HandlerFunc {
 
 		userLogin := claims["login"].(string)
 
-		user, err := s.repository.GetByLogin(userLogin)
+		user, err := s.repository.GetUserByLogin(userLogin)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
@@ -66,11 +68,11 @@ func (s *Handler) GetData() http.HandlerFunc {
 	}
 }
 
-func (s *Handler) Update() http.HandlerFunc {
+func (s *User) UpdateUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		var payload UpdateRequest
+		var payload dtos.UpdateUserRequest
 		json := json.New(r, s.logger, w)
 		jsonResponses := mapjson.New(s.logger, w, r)
 
@@ -80,7 +82,7 @@ func (s *Handler) Update() http.HandlerFunc {
 			return
 		}
 
-		err := s.repository.Update(&payload)
+		err := s.repository.UpdateUser(&payload)
 		if err != nil {
 			jsonResponses.JsonError("Failed to update data, error:" + err.Error())
 			s.logger.Error("Failed to update data, error:", zap.Error(err))

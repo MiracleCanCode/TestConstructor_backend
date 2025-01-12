@@ -1,40 +1,42 @@
-package testmanager
+package http
 
 import (
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/server/pkg/db/postgresql"
-	"github.com/server/pkg/json"
-	mapjson "github.com/server/pkg/mapJson"
+	"github.com/server/dtos"
+	"github.com/server/internal/utils/db/postgresql"
+	"github.com/server/internal/utils/json"
+	mapjson "github.com/server/internal/utils/mapJson"
+	"github.com/server/usecases"
 	"go.uber.org/zap"
 )
 
-type Handler struct {
+type TestManager struct {
 	logger  *zap.Logger
 	db      *postgresql.Db
-	service *Service
+	service *usecases.TestManager
 }
 
-func New(logger *zap.Logger, db *postgresql.Db, router *mux.Router) {
-	handler := &Handler{
+func NewTestManager(logger *zap.Logger, db *postgresql.Db, router *mux.Router) {
+	handler := &TestManager{
 		logger:  logger,
 		db:      db,
-		service: NewService(db, logger, NewRepository(db)),
+		service: usecases.NewTestManager(db, logger),
 	}
 
-	router.HandleFunc("/api/test/getById/{id}", handler.GetById()).Methods("GET")
+	router.HandleFunc("/api/test/getById/{id}", handler.GetTestById()).Methods("GET")
 	router.HandleFunc("/api/test/getAll", handler.GetAll()).Methods("POST")
-	router.HandleFunc("/api/test/create", handler.Create()).Methods("POST")
+	router.HandleFunc("/api/test/create", handler.CreateTest()).Methods("POST")
 }
 
-func (s *Handler) GetAll() http.HandlerFunc {
+func (s *TestManager) GetAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
 		var (
-			payload *GetAllTestsRequest
+			payload *dtos.GetAllTestsRequest
 		)
 		decoderAndEncoder := json.New(r, s.logger, w)
 		jsonError := mapjson.New(s.logger, w, r)
@@ -46,14 +48,14 @@ func (s *Handler) GetAll() http.HandlerFunc {
 			return
 		}
 
-		getTests, count, err := s.service.GetAll(payload.Login, payload.Limit, payload.Offset)
+		getTests, count, err := s.service.GetAllTests(payload.Login, payload.Limit, payload.Offset)
 		if err != nil {
 			s.logger.Error("Failed to get tests")
 			jsonError.JsonError("Failed to get tests: " + err.Error())
 
 			return
 		}
-		tests := SetGetAllTests(getTests, count)
+		tests := dtos.SetGetAllTests(getTests, count)
 
 		if err := decoderAndEncoder.Encode(http.StatusOK, tests); err != nil {
 			s.logger.Error("Failed to encode data")
@@ -63,7 +65,7 @@ func (s *Handler) GetAll() http.HandlerFunc {
 	}
 }
 
-func (s *Handler) GetById() http.HandlerFunc {
+func (s *TestManager) GetTestById() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
@@ -76,7 +78,7 @@ func (s *Handler) GetById() http.HandlerFunc {
 			s.logger.Error("Failed parse id, error:" + err.Error())
 			return
 		}
-		getTest, err := s.service.GetById(uint(parseId))
+		getTest, err := s.service.GetTestById(uint(parseId))
 		if err != nil {
 			s.logger.Error("Failed to get test")
 			jsonError.JsonError("Failed to get test: " + err.Error())
@@ -92,11 +94,11 @@ func (s *Handler) GetById() http.HandlerFunc {
 	}
 }
 
-func (s *Handler) Create() http.HandlerFunc {
+func (s *TestManager) CreateTest() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		var payload CreateTestRequest
+		var payload dtos.CreateTestRequest
 		json := json.New(r, s.logger, w)
 		jsonError := mapjson.New(s.logger, w, r)
 
@@ -107,9 +109,9 @@ func (s *Handler) Create() http.HandlerFunc {
 			return
 		}
 
-		testModel := MapCreateTestRequestToModel(&payload)
+		testModel := dtos.MapCreateTestRequestToModel(&payload)
 
-		err = s.service.Create(testModel)
+		err = s.service.CreateTest(testModel)
 
 		if err != nil {
 			jsonError.JsonError("Failed to create test, error:" + err.Error())

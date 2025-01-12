@@ -1,31 +1,32 @@
-package user
+package repository
 
 import (
+	"github.com/server/dtos"
+	"github.com/server/internal/utils/db/postgresql"
 	"github.com/server/models"
-	"github.com/server/pkg/db/postgresql"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type IRepository interface {
-	Update(user *UpdateRequest) error
+type IUser interface {
+	Update(user *dtos.UpdateUserRequest) error
 	Create(user models.User) error
 	GetByLogin(login string) (*models.User, error)
 }
 
-type Repository struct {
+type User struct {
 	db     *postgresql.Db
 	logger *zap.Logger
 }
 
-func NewRepository(db *postgresql.Db, logger *zap.Logger) *Repository {
-	return &Repository{
+func NewUser(db *postgresql.Db, logger *zap.Logger) *User {
+	return &User{
 		db:     db,
 		logger: logger,
 	}
 }
 
-func (s *Repository) Update(user *UpdateRequest) error {
+func (s *User) UpdateUser(user *dtos.UpdateUserRequest) error {
 	updateData := map[string]interface{}{}
 
 	if user.Data.Name != nil {
@@ -47,7 +48,7 @@ func (s *Repository) Update(user *UpdateRequest) error {
 	return nil
 }
 
-func (s *Repository) Create(user models.User) error {
+func (s *User) CreateUser(user models.User) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
@@ -63,7 +64,7 @@ func (s *Repository) Create(user models.User) error {
 	return nil
 }
 
-func (s *Repository) GetByLogin(login string) (*models.User, error) {
+func (s *User) GetUserByLogin(login string) (*models.User, error) {
 
 	var user models.User
 	result := s.db.Where("login = ?", login).First(&user)

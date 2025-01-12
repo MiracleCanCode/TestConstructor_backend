@@ -1,39 +1,41 @@
-package validateresulttest
+package http
 
 import (
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/server/pkg/db/postgresql"
-	"github.com/server/pkg/json"
-	mapjson "github.com/server/pkg/mapJson"
+	"github.com/server/dtos"
+	"github.com/server/internal/utils/db/postgresql"
+	"github.com/server/internal/utils/json"
+	mapjson "github.com/server/internal/utils/mapJson"
+	"github.com/server/usecases"
 	"go.uber.org/zap"
 )
 
-type Handler struct {
+type ValidateResult struct {
 	db      *postgresql.Db
 	router  *mux.Router
-	service *Service
+	service *usecases.ValidateResult
 	logger  *zap.Logger
 }
 
-func New(db *postgresql.Db, router *mux.Router, logger *zap.Logger) {
-	handler := &Handler{
+func NewValidateResult(db *postgresql.Db, router *mux.Router, logger *zap.Logger) {
+	handler := &ValidateResult{
 		db:      db,
 		router:  router,
 		logger:  logger,
-		service: NewService(db, logger),
+		service: usecases.NewValidateResult(db, logger),
 	}
 
 	handler.router.HandleFunc("/api/test/validate", handler.ValidateResult()).Methods("POST")
 }
 
-func (s *Handler) ValidateResult() http.HandlerFunc {
+func (s *ValidateResult) ValidateResult() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		var payload *RequestPayload
+		var payload *dtos.ValidateResultRequestPayload
 		jsonDecodeAndEncode := json.New(r, s.logger, w)
 		jsonResponse := mapjson.New(s.logger, w, r)
 		if err := jsonDecodeAndEncode.Decode(&payload); err != nil {

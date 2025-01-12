@@ -6,11 +6,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 	"github.com/server/configs"
-	"github.com/server/internal/auth"
-	testmanager "github.com/server/internal/testmanager"
-	"github.com/server/internal/user"
-	validateresulttest "github.com/server/internal/validateResultTest"
-	"github.com/server/pkg/db/postgresql"
+	delivery "github.com/server/delivery/http"
+	"github.com/server/internal/utils/db/postgresql"
 	"go.uber.org/zap"
 )
 
@@ -47,8 +44,8 @@ func (s *api) RunApp() error {
 }
 
 func (s *api) FillEndpoints() {
-	auth.New(s.router, s.log, s.db, s.cfg)
-	testmanager.New(s.log, s.db, s.router)
-	validateresulttest.New(s.db, s.router, s.log)
-	user.New(s.log, s.db, s.router, s.cfg)
+	delivery.NewAuth(s.router, s.log, s.db, s.cfg)
+	delivery.NewTestManager(s.log, s.db, s.router)
+	delivery.NewValidateResult(s.db, s.router, s.log)
+	delivery.NewUser(s.log, s.db, s.router, s.cfg)
 }

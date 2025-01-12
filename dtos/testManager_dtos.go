@@ -1,4 +1,4 @@
-package testmanager
+package dtos
 
 import "github.com/server/models"
 

@@ -1,47 +1,49 @@
-package auth
+package http
 
 import (
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/server/configs"
-	"github.com/server/internal/user"
-	"github.com/server/pkg/db/postgresql"
-	"github.com/server/pkg/json"
-	mapjson "github.com/server/pkg/mapJson"
+	"github.com/server/dtos"
+	"github.com/server/internal/utils/db/postgresql"
+	"github.com/server/internal/utils/json"
+	mapjson "github.com/server/internal/utils/mapJson"
+	"github.com/server/repository"
+	"github.com/server/usecases"
 	"go.uber.org/zap"
 )
 
-type Handler struct {
+type Auth struct {
 	log      *zap.Logger
 	db       *postgresql.Db
 	cfg      *configs.Config
-	service  *Service
-	userRepo *user.Repository
+	service  *usecases.Auth
+	userRepo *repository.User
 }
 
-func New(router *mux.Router, log *zap.Logger, db *postgresql.Db, cfg *configs.Config) {
-	service := NewService(db, log, cfg, user.NewRepository(db, log))
-	handler := &Handler{
+func NewAuth(router *mux.Router, log *zap.Logger, db *postgresql.Db, cfg *configs.Config) {
+	service := usecases.NewAuth(db, log, cfg, repository.NewUser(db, log))
+	handler := &Auth{
 		log:      log,
 		db:       db,
 		cfg:      cfg,
 		service:  service,
-		userRepo: user.NewRepository(db, log),
+		userRepo: repository.NewUser(db, log),
 	}
 
 	router.HandleFunc("/api/auth/login", handler.Login()).Methods("POST")
 	router.HandleFunc("/api/auth/registration", handler.Registration()).Methods("POST")
 }
 
-func (h *Handler) Login() http.HandlerFunc {
+func (h *Auth) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
 		json := json.New(r, h.log, w)
 		message := mapjson.New(h.log, w, r)
 
-		var payload LoginRequest
+		var payload dtos.LoginRequest
 		if err := json.Decode(&payload); err != nil {
 			message.JsonError("Invalid request payload")
 			h.log.Warn("Invalid login request", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
@@ -63,21 +65,21 @@ func (h *Handler) Login() http.HandlerFunc {
 	}
 }
 
-func (h *Handler) Registration() http.HandlerFunc {
+func (h *Auth) Registration() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
 		json := json.New(r, h.log, w)
 		message := mapjson.New(h.log, w, r)
 
-		var payload RegistrationRequest
+		var payload dtos.RegistrationRequest
 		if err := json.Decode(&payload); err != nil {
 			message.JsonError("Invalid request payload")
 			h.log.Warn("Invalid registration request", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
 			return
 		}
 
-		findUserByLogin, err := h.userRepo.GetByLogin(payload.Login)
+		findUserByLogin, err := h.userRepo.GetUserByLogin(payload.Login)
 		if err == nil && findUserByLogin != nil {
 			message.JsonError("Login is already taken")
 			h.log.Warn("User login is already taken", zap.String("login", payload.Login), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))

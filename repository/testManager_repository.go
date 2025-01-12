@@ -1,26 +1,26 @@
-package testmanager
+package repository
 
 import (
+	"github.com/server/internal/utils/db/postgresql"
 	"github.com/server/models"
-	"github.com/server/pkg/db/postgresql"
 )
 
-type IRepository interface {
+type ITestManager interface {
 	GetAll(login string, offset, limit int) ([]models.Test, int64, error)
 	GetById(id uint) (*models.Test, error)
 }
 
-type Repository struct {
+type TestManager struct {
 	db *postgresql.Db
 }
 
-func NewRepository(db *postgresql.Db) *Repository {
-	return &Repository{
+func NewTestManager(db *postgresql.Db) *TestManager {
+	return &TestManager{
 		db: db,
 	}
 }
 
-func (s *Repository) GetAll(login string, offset, limit int) ([]models.Test, int64, error) {
+func (s *TestManager) GetAllTests(login string, offset, limit int) ([]models.Test, int64, error) {
 	var (
 		tests []models.Test
 		count int64
@@ -40,7 +40,7 @@ func (s *Repository) GetAll(login string, offset, limit int) ([]models.Test, int
 	return tests, count, nil
 }
 
-func (s *Repository) GetById(id uint) (*models.Test, error) {
+func (s *TestManager) GetTestById(id uint) (*models.Test, error) {
 	var test models.Test
 
 	err := s.db.Preload("Questions.Variants").First(&test, "id = ?", id).Error
@@ -51,7 +51,7 @@ func (s *Repository) GetById(id uint) (*models.Test, error) {
 	return &test, nil
 }
 
-func (s *Repository) Create(data *models.Test) error {
+func (s *TestManager) CreateTest(data *models.Test) error {
 	res := s.db.Create(&data)
 	if res.Error != nil {
 		return res.Error
