@@ -2,11 +2,11 @@ package dtos
 
 import "github.com/server/models"
 
-func MapCreateTestRequestToModel(req *CreateTestRequest) *models.Test {
+func MapCreateTestRequestToModel(req *CreateTestRequest, userId uint) *models.Test {
 	test := &models.Test{
-		Name:        req.Name,
-		AuthorLogin: req.AuthorLogin,
-		Questions:   mapQuestions(req.Questions),
+		Name:      req.Name,
+		UserID:    userId,
+		Questions: mapQuestions(req.Questions),
 	}
 
 	return test
@@ -55,9 +55,9 @@ func SetGetAllTests(tests []models.Test, count int64) *GetAllTestsResponse {
 }
 
 type GetAllTestsRequest struct {
-	Login  string `json:"login" validate:"required"`
-	Limit  int    `json:"limit" validate:"required"`
-	Offset int    `json:"offset" validate:"required"`
+	UserId uint `json:"user_id" validate:"required"`
+	Limit  int  `json:"limit" validate:"required"`
+	Offset int  `json:"offset" `
 }
 
 type GetTestByIdRequest struct {
@@ -74,9 +74,8 @@ type GetTestByIdResponse struct {
 }
 
 type CreateTestRequest struct {
-	Name        string                `json:"name" validate:"required"`
-	AuthorLogin string                `json:"author_login" validate:"required"`
-	Questions   []CreateQuestionInput `json:"questions" validate:"required"`
+	Name      string                `json:"name" validate:"required"`
+	Questions []CreateQuestionInput `json:"questions" validate:"required"`
 }
 
 type CreateAnonymusTestRequest struct {

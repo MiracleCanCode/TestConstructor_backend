@@ -8,7 +8,8 @@ type Test struct {
 	gorm.Model
 	Name                string     `json:"name"`
 	AuthorLogin         string     `json:"author_login"`
-	Questions           []Question `json:"questions" gorm:"foreignKey:TestID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	UserID              uint       `json:"user_id"`
+	Questions           []Question ` json:"questions" gorm:"foreignKey:TestID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 	CountCorrectAnswers int        `json:"count_correct_answers"`
 }
 

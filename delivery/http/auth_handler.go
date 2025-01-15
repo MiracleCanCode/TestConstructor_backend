@@ -44,7 +44,7 @@ func (h *Auth) Login() http.HandlerFunc {
 		message := mapjson.New(h.log, w, r)
 
 		var payload dtos.LoginRequest
-		if err := json.Decode(&payload); err != nil {
+		if err := json.DecodeAndValidationBody(&payload); err != nil {
 			message.JsonError("Invalid request payload")
 			h.log.Warn("Invalid login request", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
 			return
@@ -58,7 +58,7 @@ func (h *Auth) Login() http.HandlerFunc {
 		}
 
 		if err := json.Encode(http.StatusOK, &user); err != nil {
-			h.log.Error("Failed to encode login response", zap.Error(err))
+			h.log.Error("Failed to encode login response", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
 			message.JsonError("Internal server error")
 			return
 		}
@@ -73,7 +73,7 @@ func (h *Auth) Registration() http.HandlerFunc {
 		message := mapjson.New(h.log, w, r)
 
 		var payload dtos.RegistrationRequest
-		if err := json.Decode(&payload); err != nil {
+		if err := json.DecodeAndValidationBody(&payload); err != nil {
 			message.JsonError("Invalid request payload")
 			h.log.Warn("Invalid registration request", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
 			return
@@ -89,12 +89,13 @@ func (h *Auth) Registration() http.HandlerFunc {
 		user, err := h.service.Registration(&payload)
 		if err != nil {
 			message.JsonError("Registration failed: " + err.Error())
-			h.log.Error("Registration failed", zap.Error(err))
+			h.log.Error("Registration failed", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
 			return
 		}
 
 		if err := json.Encode(http.StatusOK, user); err != nil {
 			message.JsonError("Failed to encode registration response, error: " + err.Error())
+			h.log.Error("Failed encode data", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
 			return
 		}
 	}

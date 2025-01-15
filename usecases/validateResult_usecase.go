@@ -3,25 +3,26 @@ package usecases
 import (
 	"github.com/server/internal/utils/db/postgresql"
 	"github.com/server/models"
+	"github.com/server/repository"
 	"go.uber.org/zap"
 )
 
 type ValidateResult struct {
-	db             *postgresql.Db
-	getTestService *TestManager
-	logger         *zap.Logger
+	db     *postgresql.Db
+	repo   *repository.TestManager
+	logger *zap.Logger
 }
 
 func NewValidateResult(db *postgresql.Db, logger *zap.Logger) *ValidateResult {
 	return &ValidateResult{
-		db:             db,
-		logger:         logger,
-		getTestService: NewTestManager(db, logger),
+		db:     db,
+		logger: logger,
+		repo:   repository.NewTestManager(db),
 	}
 }
 
 func (s *ValidateResult) Validate(test *models.Test) (*float64, error) {
-	exampleTest, err := s.getTestService.GetTestById(test.ID)
+	exampleTest, err := s.repo.GetTestById(test.ID)
 	if err != nil {
 		s.logger.Error("Failed to get test by id, error: " + err.Error())
 		return nil, err

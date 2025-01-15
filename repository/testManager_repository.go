@@ -20,31 +20,29 @@ func NewTestManager(db *postgresql.Db) *TestManager {
 	}
 }
 
-func (s *TestManager) GetAllTests(login string, offset, limit int) ([]models.Test, int64, error) {
+func (s *TestManager) GetAllTests(user_id uint, offset, limit int) ([]models.Test, int64, error) {
 	var (
 		tests []models.Test
 		count int64
 	)
 
-	err := s.db.Table("tests").Where("deleted_at is null and author_login = ?", login).Count(&count).Error
-	if err != nil {
+	if err := s.db.Table("tests").Where("deleted_at is null and user_id = ?", user_id).Count(&count).Error; err != nil {
 		return nil, 0, err
 	}
 
-	err = s.db.Table("tests").Where("author_login = ? AND deleted_at is null", &login).
+	if err := s.db.Table("tests").Where("user_id = ? AND deleted_at is null", &user_id).
 		Order("id ASC").Offset(offset).Limit(limit).
-		Preload("Questions.Variants").Find(&tests).Error
-	if err != nil {
+		Preload("Questions.Variants").Find(&tests).Error; err != nil {
 		return nil, 0, err
 	}
+
 	return tests, count, nil
 }
 
 func (s *TestManager) GetTestById(id uint) (*models.Test, error) {
 	var test models.Test
 
-	err := s.db.Preload("Questions.Variants").First(&test, "id = ?", id).Error
-	if err != nil {
+	if err := s.db.Preload("Questions.Variants").First(&test, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
 
@@ -52,10 +50,9 @@ func (s *TestManager) GetTestById(id uint) (*models.Test, error) {
 }
 
 func (s *TestManager) CreateTest(data *models.Test) error {
-	res := s.db.Create(&data)
-	if res.Error != nil {
-		return res.Error
-	}
+	return s.db.Create(data).Error
+}
 
-	return nil
+func (s *TestManager) DeleteTest(id uint) error {
+	return s.db.Delete(&models.Test{}, id).Error
 }

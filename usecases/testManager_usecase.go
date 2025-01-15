@@ -22,18 +22,17 @@ func NewTestManager(db *postgresql.Db, logger *zap.Logger) *TestManager {
 	}
 }
 
-func (s *TestManager) GetAllTests(login string, limit, offset int) ([]models.Test, int64, error) {
-	return s.repository.GetAllTests(login, offset, limit)
+func (s *TestManager) GetAllTests(user_id uint, limit, offset int) ([]models.Test, int64, error) {
+	return s.repository.GetAllTests(user_id, offset, limit)
 }
 
 func (s *TestManager) GetTestById(id uint) (*models.Test, error) {
 	return s.repository.GetTestById(id)
 }
 func (s *TestManager) CreateTest(data *models.Test) error {
-	createTest := s.repository.CreateTest(data)
-	if createTest != nil {
-		return createTest
-	}
+	return s.repository.CreateTest(data)
+}
 
-	return nil
+func (s *TestManager) DeleteTest(id uint) error {
+	return s.repository.DeleteTest(id)
 }

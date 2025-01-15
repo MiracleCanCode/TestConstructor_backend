@@ -55,21 +55,28 @@ func (s *User) CreateUser(user models.User) error {
 	}
 	user.Password = string(hashedPassword)
 
-	result := s.db.Create(&user)
-
-	if result.Error != nil {
-		return result.Error
+	if err := s.db.Create(&user).Error; err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (s *User) GetUserByLogin(login string) (*models.User, error) {
-
 	var user models.User
-	result := s.db.Where("login = ?", login).First(&user)
-	if result.Error != nil {
-		return nil, result.Error
+
+	if err := s.db.Where("login = ?", login).First(&user).Error; err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (s *User) GetUserByEmail(email string) (*models.User, error) {
+	var user models.User
+
+	if err := s.db.Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, err
 	}
 
 	return &user, nil

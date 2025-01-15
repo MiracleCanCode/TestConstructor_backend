@@ -38,15 +38,14 @@ func (s *ValidateResult) ValidateResult() http.HandlerFunc {
 		var payload *dtos.ValidateResultRequestPayload
 		jsonDecodeAndEncode := json.New(r, s.logger, w)
 		jsonResponse := mapjson.New(s.logger, w, r)
-		if err := jsonDecodeAndEncode.Decode(&payload); err != nil {
-			s.logger.Error("Failed to decode body: " + err.Error())
+		if err := jsonDecodeAndEncode.DecodeAndValidationBody(&payload); err != nil {
+			s.logger.Error("Failed to decode body", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
 			jsonResponse.JsonError("Invalid request payload")
 			return
 		}
 		result, err := s.service.Validate(payload.Test)
 		if err != nil {
-			s.logger.Error("Validation failed: " + err.Error())
-			jsonResponse.JsonError("Failed to validate test")
+			s.logger.Error("Validation failed", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
 			return
 		}
 

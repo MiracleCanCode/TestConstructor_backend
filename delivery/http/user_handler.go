@@ -12,6 +12,7 @@ import (
 	"github.com/server/internal/utils/jwt"
 	mapjson "github.com/server/internal/utils/mapJson"
 	"github.com/server/internal/utils/middleware"
+	"github.com/server/models"
 	"github.com/server/repository"
 	"go.uber.org/zap"
 )
@@ -54,15 +55,28 @@ func (s *User) GetUserData() http.HandlerFunc {
 
 		userLogin := claims["login"].(string)
 
-		user, err := s.repository.GetUserByLogin(userLogin)
-		if err != nil {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
+		userChan := make(chan *models.User, 1)
+		errChan := make(chan error, 1)
 
-		if err := jsonHelper.Encode(200, user); err != nil {
-			s.logger.Error("Failed to encode user data", zap.Error(err))
-			jsonData.JsonError("Failed to encode user data: " + err.Error())
+		go func() {
+			user, err := s.repository.GetUserByLogin(userLogin)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			userChan <- user
+		}()
+
+		select {
+		case user := <-userChan:
+			if err := jsonHelper.Encode(200, user); err != nil {
+				s.logger.Error("Failed to encode user data", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+				jsonData.JsonError("Failed to encode user data: " + err.Error())
+				return
+			}
+		case err := <-errChan:
+			s.logger.Error("Failed to get user by login", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 	}
@@ -78,14 +92,14 @@ func (s *User) UpdateUser() http.HandlerFunc {
 
 		if err := json.DecodeAndValidationBody(&payload); err != nil {
 			jsonResponses.JsonError("Failed to decode data, error:" + err.Error())
-			s.logger.Error("Failed to decode data, error:", zap.Error(err))
+			s.logger.Error("Failed to decode data", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
 			return
 		}
 
 		err := s.repository.UpdateUser(&payload)
 		if err != nil {
 			jsonResponses.JsonError("Failed to update data, error:" + err.Error())
-			s.logger.Error("Failed to update data, error:", zap.Error(err))
+			s.logger.Error("Failed to update data", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
 			return
 		}
 
