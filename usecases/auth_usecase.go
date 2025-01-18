@@ -35,7 +35,7 @@ func (s *Auth) Login(data *dtos.LoginRequest) (*dtos.LoginResponse, error) {
 		return nil, errors.New("login or password cannot be empty")
 	}
 
-	newJwt := jwt.NewJwt("SUPERSECRETKEYFORBESTAPPINTHEWORLD")
+	newJwt := jwt.NewJwt(s.log)
 
 	user, err := s.userRepo.GetUserByLogin(data.Login)
 	if err != nil {

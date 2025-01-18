@@ -5,6 +5,7 @@ import (
 	"github.com/server/configs"
 	"github.com/server/internal/utils/db/postgresql"
 	"github.com/server/internal/utils/server"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -15,6 +16,6 @@ func main() {
 	app.FillEndpoints()
 
 	if err := app.RunApp(); err != nil {
-		log.Error("Failed to run server, error:" + err.Error())
+		log.Error("Failed to run server", zap.Error(err))
 	}
 }

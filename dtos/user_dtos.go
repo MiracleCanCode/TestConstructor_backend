@@ -7,3 +7,7 @@ type UpdateUserRequest struct {
 		Avatar *string `json:"avatar"`
 	} `json:"data" validate:"required"`
 }
+
+type GetUserByLoginRequest struct {
+	Login string `json:"login" validate:"required"`
+}

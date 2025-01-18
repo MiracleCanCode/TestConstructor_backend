@@ -16,7 +16,7 @@ type Config struct {
 func Load(log *zap.Logger) *Config {
 
 	if err := godotenv.Load(".env.local"); err != nil {
-		log.Error("Failed get env file, err:" + err.Error())
+		log.Error("Failed get env file", zap.Error(err))
 	}
 	db := os.Getenv("DB")
 	port := os.Getenv("PORT")

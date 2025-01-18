@@ -24,7 +24,7 @@ func NewValidateResult(db *postgresql.Db, logger *zap.Logger) *ValidateResult {
 func (s *ValidateResult) Validate(test *models.Test) (*float64, error) {
 	exampleTest, err := s.repo.GetTestById(test.ID)
 	if err != nil {
-		s.logger.Error("Failed to get test by id, error: " + err.Error())
+		s.logger.Error("Failed to get test by id", zap.Error(err))
 		return nil, err
 	}
 

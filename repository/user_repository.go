@@ -9,9 +9,10 @@ import (
 )
 
 type IUser interface {
-	Update(user *dtos.UpdateUserRequest) error
-	Create(user models.User) error
-	GetByLogin(login string) (*models.User, error)
+	UpdateUser(user *dtos.UpdateUserRequest) error
+	CreateUser(user models.User) error
+	GetUserByLogin(login string) (*models.User, error)
+	GetUserByEmail(email string) (*models.User, error)
 }
 
 type User struct {
@@ -41,7 +42,7 @@ func (s *User) UpdateUser(user *dtos.UpdateUserRequest) error {
 	}
 
 	if err := s.db.Model(&models.User{}).Where("login = ?", user.UserLogin).Updates(updateData).Error; err != nil {
-		s.logger.Error("Failed update user data, error:" + err.Error())
+		s.logger.Error("Failed update user data", zap.Error(err))
 		return err
 	}
 

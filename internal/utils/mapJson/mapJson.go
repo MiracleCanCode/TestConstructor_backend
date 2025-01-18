@@ -48,7 +48,7 @@ func (s *MessageResponse) JsonError(message string) {
 
 func (s *MessageResponse) JsonSuccess(message string) {
 	json := json.New(s.r, s.logger, s.w)
-	s.w.WriteHeader(http.StatusAccepted)
+	s.w.WriteHeader(http.StatusOK)
 
 	jsonMap := map[string]string{
 		"success": message,
@@ -64,7 +64,7 @@ func (s *MessageResponse) JsonSuccess(message string) {
 	s.w.Header().Set("Content-Type", "application/json")
 	_, err = s.w.Write(dataMarshaled)
 	if err != nil {
-		s.logger.Error("Error write data, error:" + err.Error())
+		s.logger.Error("Error write data", zap.Error(err))
 		return
 	}
 }

@@ -6,8 +6,11 @@ import (
 )
 
 type ITestManager interface {
-	GetAll(login string, offset, limit int) ([]models.Test, int64, error)
-	GetById(id uint) (*models.Test, error)
+	GetAllTests(user_id uint, offset, limit int) ([]models.Test, int64, error)
+	GetTestById(id uint) (*models.Test, error)
+	CreateTest(data *models.Test) error
+	DeleteTest(id uint) error
+	ChangeActiveStatus(status bool, testId uint) error
 }
 
 type TestManager struct {
@@ -55,4 +58,10 @@ func (s *TestManager) CreateTest(data *models.Test) error {
 
 func (s *TestManager) DeleteTest(id uint) error {
 	return s.db.Delete(&models.Test{}, id).Error
+}
+
+func (s *TestManager) ChangeActiveStatus(status bool, testId uint) error {
+	return s.db.Model(&models.Test{}).
+		Where("id = ?", testId).
+		Update("is_active", status).Error
 }

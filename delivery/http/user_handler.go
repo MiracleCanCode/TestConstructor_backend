@@ -36,6 +36,7 @@ func NewUser(logger *zap.Logger, db *postgresql.Db, router *mux.Router, cfg *con
 
 	router.HandleFunc("/api/user/getData", middleware.IsAuth(handler.GetUserData())).Methods("GET")
 	router.HandleFunc("/api/user/update", middleware.IsAuth(handler.UpdateUser())).Methods("POST")
+	router.HandleFunc("/api/user/getByLogin", middleware.IsAuth(handler.GetUserByLogin())).Methods("POST")
 }
 
 func (s *User) GetUserData() http.HandlerFunc {
@@ -48,7 +49,7 @@ func (s *User) GetUserData() http.HandlerFunc {
 		authHeader := r.Header.Get("Authorization")
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
-		_, claims, err := jwt.NewJwt("SUPERSECRETKEYFORBESTAPPINTHEWORLD").VerifyToken(tokenString)
+		_, claims, err := jwt.NewJwt(s.logger).VerifyToken(tokenString)
 		if err != nil {
 			return
 		}
@@ -104,5 +105,32 @@ func (s *User) UpdateUser() http.HandlerFunc {
 		}
 
 		jsonResponses.JsonSuccess("Success update data!")
+	}
+}
+
+func (s *User) GetUserByLogin() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+
+		var payload dtos.GetUserByLoginRequest
+		json := json.New(r, s.logger, w)
+		jsonResponses := mapjson.New(s.logger, w, r)
+
+		if err := json.DecodeAndValidationBody(&payload); err != nil {
+			s.logger.Error("Failed to decode payload body", zap.Error(err))
+			return
+		}
+
+		user, err := s.repository.GetUserByLogin(payload.Login)
+		if err != nil {
+			s.logger.Error("Failed to get user by login", zap.Error(err))
+			jsonResponses.JsonError("Failed to get user by login, error" + err.Error())
+			return
+		}
+
+		if err := json.Encode(200, user); err != nil {
+			s.logger.Error("Failed to encode data", zap.Error(err))
+			return
+		}
 	}
 }

@@ -25,16 +25,15 @@ func NewAuth(db *postgresql.Db, logger *zap.Logger) *Auth {
 
 func (s *Auth) SaveRefreshToken(login string, token string) error {
 	var user models.User
-	result := s.db.Where("login = ?", login).First(&user)
-	if result.Error != nil {
-		return result.Error
+	if err := s.db.Where("login = ?", login).First(&user); err != nil {
+		return err.Error
 	}
 
 	user.RefreshToken = token
 	updateResult := s.db.Save(&user)
 
 	if err := updateResult.Error; err != nil {
-		s.logger.Error(updateResult.Error.Error())
+		s.logger.Error(updateResult.Error.Error(), zap.Error(err))
 	}
 
 	return nil

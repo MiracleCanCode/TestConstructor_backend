@@ -93,3 +93,8 @@ type CreateVariantInput struct {
 	Name      string `json:"name" validate:"required"`
 	IsCorrect bool   `json:"is_correct" validate:"required"`
 }
+
+type UpdateTestActiveStatus struct {
+	TestId   uint `json:"test_id" validate:"required"`
+	IsActive bool `json:"is_active"`
+}

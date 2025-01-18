@@ -15,7 +15,7 @@ func New(conf *configs.Config, log *zap.Logger) *Db {
 	db, err := gorm.Open(postgres.Open(conf.DB), &gorm.Config{})
 
 	if err != nil {
-		log.Sugar().Panicf("Failed conn to db: %d", err)
+		log.Error("Failed conn to db", zap.Error(err))
 	}
 
 	return &Db{

@@ -8,15 +8,17 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/server/configs"
+	"go.uber.org/zap"
 )
 
 type JWT struct {
 	Secret string
 }
 
-func NewJwt(secret string) *JWT {
+func NewJwt(logger *zap.Logger) *JWT {
+	cfg := configs.Load(logger)
 	return &JWT{
-		Secret: secret,
+		Secret: cfg.SECRET,
 	}
 }
 
@@ -57,11 +59,11 @@ func (s *JWT) VerifyToken(tokenString string) (*jwt.Token, jwt.MapClaims, error)
 	return token, claims, nil
 }
 
-func ExtractUserFromAuthHeader(r *http.Request, cfg *configs.Config) (string, error) {
+func (s *JWT) ExtractUserFromAuthHeader(r *http.Request) (string, error) {
 	authHeader := r.Header.Get("Authorization")
 	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
-	_, claims, err := NewJwt(cfg.SECRET).VerifyToken(tokenString)
+	_, claims, err := s.VerifyToken(tokenString)
 	if err != nil {
 		return "", err
 	}
