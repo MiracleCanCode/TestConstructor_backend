@@ -12,7 +12,6 @@ import (
 	"github.com/server/internal/utils/jwt"
 	mapjson "github.com/server/internal/utils/mapJson"
 	"github.com/server/internal/utils/middleware"
-	"github.com/server/models"
 	"github.com/server/repository"
 	"go.uber.org/zap"
 )
@@ -56,16 +55,17 @@ func (s *User) GetUserData() http.HandlerFunc {
 
 		userLogin := claims["login"].(string)
 
-		userChan := make(chan *models.User, 1)
+		userChan := make(chan *dtos.GetUserByLoginResponse, 1)
 		errChan := make(chan error, 1)
 
 		go func() {
 			user, err := s.repository.GetUserByLogin(userLogin)
+			modifiedUser := dtos.ToGetUserByLoginResponse(user)
 			if err != nil {
 				errChan <- err
 				return
 			}
-			userChan <- user
+			userChan <- modifiedUser
 		}()
 
 		select {

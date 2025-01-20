@@ -23,19 +23,20 @@ func NewTestManager(db *postgresql.Db) *TestManager {
 	}
 }
 
-func (s *TestManager) GetAllTests(user_id uint, offset, limit int) ([]models.Test, int64, error) {
-	var (
-		tests []models.Test
-		count int64
-	)
+func (s *TestManager) GetAllTests(user_id uint, lastID, limit int) ([]models.Test, int64, error) {
+	var tests []models.Test
 
-	if err := s.db.Table("tests").Where("deleted_at is null and user_id = ?", user_id).Count(&count).Error; err != nil {
+	query := s.db.Table("tests").Where("deleted_at IS NULL AND user_id = ?", user_id)
+	if lastID > 0 {
+		query = query.Where("id > ?", lastID)
+	}
+
+	if err := query.Order("id ASC").Limit(limit).Preload("Questions.Variants").Find(&tests).Error; err != nil {
 		return nil, 0, err
 	}
 
-	if err := s.db.Table("tests").Where("user_id = ? AND deleted_at is null", &user_id).
-		Order("id ASC").Offset(offset).Limit(limit).
-		Preload("Questions.Variants").Find(&tests).Error; err != nil {
+	var count int64
+	if err := s.db.Table("tests").Where("deleted_at IS NULL AND user_id = ?", user_id).Count(&count).Error; err != nil {
 		return nil, 0, err
 	}
 

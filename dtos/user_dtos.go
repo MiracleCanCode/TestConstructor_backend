@@ -1,5 +1,17 @@
 package dtos
 
+import "github.com/server/models"
+
+func ToGetUserByLoginResponse(user *models.User) *GetUserByLoginResponse {
+	return &GetUserByLoginResponse{
+		Login:  user.Login,
+		Name:   user.Name,
+		Avatar: user.Avatar,
+		Id:     user.ID,
+		Email:  user.Email,
+	}
+}
+
 type UpdateUserRequest struct {
 	UserLogin string `json:"user_login" validate:"required"`
 	Data      struct {
@@ -10,4 +22,12 @@ type UpdateUserRequest struct {
 
 type GetUserByLoginRequest struct {
 	Login string `json:"login" validate:"required"`
+}
+
+type GetUserByLoginResponse struct {
+	Login  string  `json:"login"`
+	Email  string  `json:"email"`
+	Id     uint    `json:"id"`
+	Name   string  `json:"name"`
+	Avatar *string `json:"avatar"`
 }

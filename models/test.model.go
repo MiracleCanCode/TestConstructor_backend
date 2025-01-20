@@ -18,12 +18,12 @@ type Question struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Variants    []Variant `json:"variants" gorm:"foreignKey:QuestionID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
-	TestID      uint      `json:"test_id"`
+	TestID      uint      `json:"test_id" gorm:"index"`
 }
 
 type Variant struct {
 	gorm.Model
 	Name       string `json:"name"`
-	QuestionID uint   `json:"question_id"`
+	QuestionID uint   `json:"question_id" gorm:"index"`
 	IsCorrect  bool   `json:"is_correct"`
 }

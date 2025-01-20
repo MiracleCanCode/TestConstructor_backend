@@ -28,21 +28,23 @@ func NewUser(db *postgresql.Db, logger *zap.Logger) *User {
 }
 
 func (s *User) UpdateUser(user *dtos.UpdateUserRequest) error {
-	updateData := map[string]interface{}{}
+	updateData := make(map[string]interface{})
 
 	if user.Data.Name != nil {
-		updateData["name"] = &user.Data.Name
+		updateData["name"] = *user.Data.Name
 	}
 	if user.Data.Avatar != nil {
-		updateData["avatar"] = &user.Data.Avatar
+		updateData["avatar"] = *user.Data.Avatar
 	}
 
 	if len(updateData) == 0 {
 		return nil
 	}
 
-	if err := s.db.Model(&models.User{}).Where("login = ?", user.UserLogin).Updates(updateData).Error; err != nil {
-		s.logger.Error("Failed update user data", zap.Error(err))
+	if err := s.db.Model(&models.User{}).
+		Where("login = ?", user.UserLogin).
+		Updates(updateData).Error; err != nil {
+		s.logger.Error("Failed to update user data", zap.Error(err))
 		return err
 	}
 
@@ -66,7 +68,10 @@ func (s *User) CreateUser(user models.User) error {
 func (s *User) GetUserByLogin(login string) (*models.User, error) {
 	var user models.User
 
-	if err := s.db.Where("login = ?", login).First(&user).Error; err != nil {
+	if err := s.db.Select("id, login, email, name, avatar").
+		Where("login = ?", login).
+		First(&user).Error; err != nil {
+		s.logger.Error("Failed to get user by login", zap.Error(err))
 		return nil, err
 	}
 
@@ -76,7 +81,10 @@ func (s *User) GetUserByLogin(login string) (*models.User, error) {
 func (s *User) GetUserByEmail(email string) (*models.User, error) {
 	var user models.User
 
-	if err := s.db.Where("email = ?", email).First(&user).Error; err != nil {
+	if err := s.db.Select("id, login, email, name, avatar").
+		Where("email = ?", email).
+		First(&user).Error; err != nil {
+		s.logger.Error("Failed to get user by email", zap.Error(err))
 		return nil, err
 	}
 
