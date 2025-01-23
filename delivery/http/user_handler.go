@@ -11,7 +11,7 @@ import (
 	"github.com/server/internal/utils/json"
 	"github.com/server/internal/utils/jwt"
 	mapjson "github.com/server/internal/utils/mapJson"
-	"github.com/server/internal/utils/middleware"
+	// "github.com/server/internal/utils/middleware"
 	"github.com/server/repository"
 	"go.uber.org/zap"
 )
@@ -33,9 +33,9 @@ func NewUser(logger *zap.Logger, db *postgresql.Db, router *mux.Router, cfg *con
 		cfg:        cfg,
 	}
 
-	router.HandleFunc("/api/user/getData", middleware.IsAuth(handler.GetUserData())).Methods("GET")
-	router.HandleFunc("/api/user/update", middleware.IsAuth(handler.UpdateUser())).Methods("POST")
-	router.HandleFunc("/api/user/getByLogin", middleware.IsAuth(handler.GetUserByLogin())).Methods("POST")
+	router.HandleFunc("/api/user/getData", handler.GetUserData()).Methods("GET")
+	router.HandleFunc("/api/user/update", handler.UpdateUser()).Methods("POST")
+	router.HandleFunc("/api/user/getByLogin", handler.GetUserByLogin()).Methods("POST")
 }
 
 func (s *User) GetUserData() http.HandlerFunc {

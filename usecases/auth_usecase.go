@@ -31,10 +31,6 @@ func NewAuth(db *postgresql.Db, log *zap.Logger, cfg *configs.Config, userRepo *
 }
 
 func (s *Auth) Login(data *dtos.LoginRequest) (*dtos.LoginResponse, error) {
-	if data.Login == "" || data.Password == "" {
-		return nil, errors.New("login or password cannot be empty")
-	}
-
 	newJwt := jwt.NewJwt(s.log)
 
 	user, err := s.userRepo.GetUserByLogin(data.Login)
@@ -42,6 +38,7 @@ func (s *Auth) Login(data *dtos.LoginRequest) (*dtos.LoginResponse, error) {
 		s.log.Error("Failed to fetch user", zap.Error(err))
 		return nil, errors.New("user not found")
 	}
+
 	if user == nil {
 		s.log.Error("User not found", zap.String("login", data.Login))
 		return nil, errors.New("user not found")
@@ -63,6 +60,7 @@ func (s *Auth) Login(data *dtos.LoginRequest) (*dtos.LoginResponse, error) {
 		s.log.Error("Failed to create refresh token", zap.Error(err))
 		return nil, errors.New("internal server error")
 	}
+
 	if err := s.repo.SaveRefreshToken(user.Login, refreshToken); err != nil {
 		s.log.Error(err.Error())
 	}
@@ -73,10 +71,6 @@ func (s *Auth) Login(data *dtos.LoginRequest) (*dtos.LoginResponse, error) {
 }
 
 func (s *Auth) Registration(data *dtos.RegistrationRequest) (*dtos.RegistrationResponse, error) {
-	if data.Email == "" || data.Login == "" || data.Password == "" || data.Name == "" {
-		return nil, errors.New("exist fields name, login, password, email")
-	}
-
 	if err := s.userRepo.CreateUser(data.ToUser()); err != nil {
 		s.log.Error("Failed register user")
 		return nil, errors.New("failed register")

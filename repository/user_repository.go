@@ -68,7 +68,7 @@ func (s *User) CreateUser(user models.User) error {
 func (s *User) GetUserByLogin(login string) (*models.User, error) {
 	var user models.User
 
-	if err := s.db.Select("id, login, email, name, avatar").
+	if err := s.db.Select("id, login, email, name, avatar, password").
 		Where("login = ?", login).
 		First(&user).Error; err != nil {
 		s.logger.Error("Failed to get user by login", zap.Error(err))

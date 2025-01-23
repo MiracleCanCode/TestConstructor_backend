@@ -177,7 +177,10 @@ func (s *TestManager) DeleteTest() http.HandlerFunc {
 			return
 		}
 
-		s.service.DeleteTest(uint(parseId))
+		if err := s.service.DeleteTest(uint(parseId)); err != nil {
+			s.logger.Error("Error test delete", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			return
+		}
 		jsonError.JsonSuccess("Success delete test")
 	}
 }

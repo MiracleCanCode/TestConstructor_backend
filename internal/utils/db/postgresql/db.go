@@ -1,7 +1,6 @@
 package postgresql
 
 import (
-	"database/sql"
 	"time"
 
 	"github.com/server/configs"
@@ -11,7 +10,6 @@ import (
 )
 
 type Db struct {
-	close *sql.DB
 	*gorm.DB
 }
 
@@ -31,16 +29,12 @@ func New(conf *configs.Config, log *zap.Logger) *Db {
 	if !conf.PRODACTION {
 		db.Debug()
 	}
-	sqlDb.SetConnMaxIdleTime(5 * time.Minute)
+	sqlDb.SetConnMaxIdleTime(30 * time.Minute)
 	sqlDb.SetMaxOpenConns(50)
 	sqlDb.SetConnMaxLifetime(30 * time.Minute)
 
+	log.Info("DB connected!")
 	return &Db{
-		sqlDb,
 		db,
 	}
-}
-
-func (s *Db) CloseConnection() error {
-	return s.close.Close()
 }

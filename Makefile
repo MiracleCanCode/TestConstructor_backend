@@ -4,6 +4,7 @@ BINARY_NAME=myapp
 
 SRC_DIR=./cmd
 MIGRATE_DIR=./migrations
+DOCKER_COMPOSE_DIR=./deployments/docker-compose.yml
 
 
 GO=go
@@ -11,6 +12,7 @@ GOFMT=gofmt
 GOFLAGS=-v
 LDFLAGS=-s -w
 GOLINT=golangci-lint 
+DOCKERCOMPOSE=docker-compose
 
 migrate:
 	$(GO) run $(MIGRATE_DIR)
@@ -18,6 +20,8 @@ migrate:
 lint:
 	$(GOLINT) run ./...
 
+docker-compose:
+	$(DOCKERCOMPOSE) -f $(DOCKER_COMPOSE_DIR) up --build
 
 build:
 	$(GO) build $(GOFLAGS) -o $(BINARY_NAME) $(SRC_DIR)
