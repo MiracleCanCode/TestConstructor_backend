@@ -1,2 +1,2 @@
 .env.local
-/postgres-data
+postgres-data

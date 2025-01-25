@@ -31,7 +31,7 @@ func NewTestManager(logger *zap.Logger, db *postgresql.Db, router *mux.Router) {
 		userRepo: repository.NewUser(db, logger),
 	}
 
-	router.HandleFunc("/api/test/getById/{id}", handler.GetTestById()).Methods("GET")
+	router.HandleFunc("/api/test/getById/{id}", middleware.IsAuth(handler.GetTestById())).Methods("GET")
 	router.HandleFunc("/api/test/getAll", middleware.IsAuth(handler.GetAll())).Methods("POST")
 	router.HandleFunc("/api/test/create", middleware.IsAuth(handler.CreateTest())).Methods("POST")
 	router.HandleFunc("/api/test/delete/{id}", middleware.IsAuth(handler.DeleteTest())).Methods("DELETE")

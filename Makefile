@@ -41,7 +41,6 @@ deps:
 format:
 	$(GOFMT) -w .
 
-
 runf: run format
-
+precommit: lint format
 all: test build

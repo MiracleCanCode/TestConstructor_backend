@@ -9,6 +9,7 @@ import (
 	"github.com/server/internal/utils/db/postgresql"
 	"github.com/server/internal/utils/json"
 	mapjson "github.com/server/internal/utils/mapJson"
+	"github.com/server/internal/utils/middleware"
 	"github.com/server/usecases"
 	"go.uber.org/zap"
 )
@@ -28,17 +29,17 @@ func NewValidateResult(db *postgresql.Db, router *mux.Router, logger *zap.Logger
 		service: usecases.NewValidateResult(db, logger),
 	}
 
-	handler.router.HandleFunc("/api/test/validate", handler.ValidateResult()).Methods("POST")
+	handler.router.HandleFunc("/api/test/validate", middleware.IsAuth(handler.ValidateResult())).Methods("POST")
 }
 
 func (s *ValidateResult) ValidateResult() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		var payload *dtos.ValidateResultRequestPayload
+		var payload dtos.ValidateResultRequestPayload
 		jsonDecodeAndEncode := json.New(r, s.logger, w)
 		jsonResponse := mapjson.New(s.logger, w, r)
-		if err := jsonDecodeAndEncode.DecodeAndValidationBody(&payload); err != nil {
+		if err := jsonDecodeAndEncode.Decode(&payload); err != nil {
 			s.logger.Error("Failed to decode body", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
 			jsonResponse.JsonError("Invalid request payload")
 			return
@@ -49,6 +50,6 @@ func (s *ValidateResult) ValidateResult() http.HandlerFunc {
 			return
 		}
 
-		jsonResponse.JsonSuccess("percents: " + strconv.FormatFloat(*result, 'f', 2, 64))
+		jsonResponse.JsonSuccess(strconv.FormatFloat(*result, 'f', 2, 64))
 	}
 }
