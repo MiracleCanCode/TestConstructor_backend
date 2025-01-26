@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/server/internal/utils/validation"
+	"github.com/server/pkg/validation"
 	"go.uber.org/zap"
 )
 

@@ -3,13 +3,12 @@ package usecases
 import (
 	"errors"
 
-	"github.com/server/models"
-	"github.com/server/repository"
-
+	"github.com/server/internal/models"
+	"github.com/server/internal/repository"
 	"go.uber.org/zap"
 )
 
-type TestService interface {
+type TestManagerInterface interface {
 	GetAllTests(userID uint, limit, offset int) ([]models.Test, int64, error)
 	GetTestById(id uint, userLogin string) (*models.Test, error)
 	CreateTest(data *models.Test) error
@@ -18,14 +17,14 @@ type TestService interface {
 }
 
 type TestManager struct {
-	testRepo repository.ITestManager
-	userRepo repository.IUser
+	testRepo repository.TestManagerInterface
+	userRepo repository.UserInterface
 	logger   *zap.Logger
 }
 
 func NewTestManager(
-	testRepo repository.ITestManager,
-	userRepo repository.IUser,
+	testRepo repository.TestManagerInterface,
+	userRepo repository.UserInterface,
 	logger *zap.Logger,
 ) *TestManager {
 	return &TestManager{

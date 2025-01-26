@@ -1,14 +1,14 @@
 package repository
 
 import (
-	"github.com/server/dtos"
-	"github.com/server/internal/utils/db/postgresql"
-	"github.com/server/models"
+	"github.com/server/internal/dtos"
+	"github.com/server/internal/models"
+	"github.com/server/pkg/db/postgresql"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type IUser interface {
+type UserInterface interface {
 	UpdateUser(user *dtos.UpdateUserRequest) error
 	CreateUser(user models.User) error
 	GetUserByLogin(login string) (*models.User, error)

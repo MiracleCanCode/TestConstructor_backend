@@ -1,6 +1,6 @@
 package dtos
 
-import "github.com/server/models"
+import "github.com/server/internal/models"
 
 func MapCreateTestRequestToModel(req *CreateTestRequest, userId uint) *models.Test {
 	test := &models.Test{

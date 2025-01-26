@@ -1,6 +1,6 @@
 package dtos
 
-import "github.com/server/models"
+import "github.com/server/internal/models"
 
 func ToGetUserByLoginResponse(user *models.User) *GetUserByLoginResponse {
 	return &GetUserByLoginResponse{

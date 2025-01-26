@@ -5,19 +5,20 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/server/configs"
-	"github.com/server/dtos"
-	"github.com/server/internal/utils/db/postgresql"
-	"github.com/server/internal/utils/json"
-	"github.com/server/internal/utils/jwt"
-	"github.com/server/repository"
-	"github.com/server/usecases"
+	"github.com/server/internal/dtos"
+	"github.com/server/internal/repository"
+	"github.com/server/internal/usecases"
+	"github.com/server/pkg/db/postgresql"
+	"github.com/server/pkg/json"
+	"github.com/server/pkg/jwt"
+
 	"go.uber.org/zap"
 )
 
 type AuthHandler struct {
 	logger      *zap.Logger
-	authUsecase usecases.IAuth
-	userRepo    repository.IUser
+	authUsecase usecases.AuthInterface
+	userRepo    repository.UserInterface
 }
 
 func NewAuthHandler(router *mux.Router, logger *zap.Logger, db *postgresql.Db, cfg *configs.Config) {

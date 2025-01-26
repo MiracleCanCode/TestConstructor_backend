@@ -5,20 +5,20 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/server/dtos"
-	"github.com/server/internal/utils/db/postgresql"
-	"github.com/server/internal/utils/json"
-	mapjson "github.com/server/internal/utils/mapJson"
-	"github.com/server/internal/utils/middleware"
-	"github.com/server/repository"
-	"github.com/server/usecases"
+	"github.com/server/internal/dtos"
+	"github.com/server/internal/repository"
+	"github.com/server/internal/usecases"
+	"github.com/server/pkg/db/postgresql"
+	"github.com/server/pkg/json"
+	mapjson "github.com/server/pkg/mapJson"
+	"github.com/server/pkg/middleware"
 	"go.uber.org/zap"
 )
 
 type ValidateResult struct {
 	db      *postgresql.Db
 	router  *mux.Router
-	service usecases.Validator
+	service usecases.TestValidatorInterface
 	logger  *zap.Logger
 }
 

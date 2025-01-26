@@ -5,8 +5,8 @@ import (
 
 	"github.com/MiracleCanCode/example_configuration_logger/pkg/logger"
 	"github.com/server/configs"
-	"github.com/server/internal/utils/db/postgresql"
-	"github.com/server/models"
+	"github.com/server/internal/models"
+	"github.com/server/pkg/db/postgresql"
 	"go.uber.org/zap"
 )
 

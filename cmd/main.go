@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/MiracleCanCode/example_configuration_logger/pkg/logger"
 	"github.com/server/configs"
-	"github.com/server/internal/utils/db/postgresql"
-	"github.com/server/internal/utils/server"
+	"github.com/server/pkg/db/postgresql"
+	"github.com/server/pkg/server"
 	"go.uber.org/zap"
 )
 

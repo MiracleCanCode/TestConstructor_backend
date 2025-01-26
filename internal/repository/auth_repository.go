@@ -1,13 +1,12 @@
 package repository
 
 import (
-	"github.com/server/internal/utils/db/postgresql"
-	"github.com/server/models"
-
+	"github.com/server/internal/models"
+	"github.com/server/pkg/db/postgresql"
 	"go.uber.org/zap"
 )
 
-type IAuth interface {
+type AuthInterface interface {
 	SaveRefreshToken(login string, token string) error
 }
 

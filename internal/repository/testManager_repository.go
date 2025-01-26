@@ -1,11 +1,11 @@
 package repository
 
 import (
-	"github.com/server/internal/utils/db/postgresql"
-	"github.com/server/models"
+	"github.com/server/internal/models"
+	"github.com/server/pkg/db/postgresql"
 )
 
-type ITestManager interface {
+type TestManagerInterface interface {
 	GetAllTests(user_id uint, offset, limit int) ([]models.Test, int64, error)
 	GetTestById(id uint) (*models.Test, error)
 	CreateTest(data *models.Test) error

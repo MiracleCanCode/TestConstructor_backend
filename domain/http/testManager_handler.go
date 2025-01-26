@@ -5,14 +5,14 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/server/dtos"
-	"github.com/server/internal/utils/db/postgresql"
-	"github.com/server/internal/utils/json"
-	"github.com/server/internal/utils/jwt"
-	mapjson "github.com/server/internal/utils/mapJson"
-	"github.com/server/internal/utils/middleware"
-	"github.com/server/repository"
-	"github.com/server/usecases"
+	"github.com/server/internal/dtos"
+	"github.com/server/internal/repository"
+	"github.com/server/internal/usecases"
+	"github.com/server/pkg/db/postgresql"
+	"github.com/server/pkg/json"
+	"github.com/server/pkg/jwt"
+	mapjson "github.com/server/pkg/mapJson"
+	"github.com/server/pkg/middleware"
 	"go.uber.org/zap"
 )
 

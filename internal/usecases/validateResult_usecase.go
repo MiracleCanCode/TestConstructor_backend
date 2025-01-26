@@ -3,22 +3,22 @@ package usecases
 import (
 	"errors"
 
-	"github.com/server/models"
-	"github.com/server/repository"
+	"github.com/server/internal/models"
+	"github.com/server/internal/repository"
 	"go.uber.org/zap"
 )
 
-type Validator interface {
+type TestValidatorInterface interface {
 	Validate(test *models.Test) (*float64, error)
 }
 
 type TestValidator struct {
-	testRepo repository.ITestManager
+	testRepo repository.TestManagerInterface
 	logger   *zap.Logger
 }
 
 func NewTestValidator(
-	testRepo repository.ITestManager,
+	testRepo repository.TestManagerInterface,
 	logger *zap.Logger,
 ) *TestValidator {
 	return &TestValidator{

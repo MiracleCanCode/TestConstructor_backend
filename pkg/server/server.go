@@ -4,12 +4,11 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/rs/cors"
 	"github.com/server/configs"
-	delivery "github.com/server/delivery/http"
-	"github.com/server/internal/utils/db/postgresql"
+	delivery "github.com/server/domain/http"
+	"github.com/server/pkg/db/postgresql"
+	"github.com/server/pkg/middleware"
 	"go.uber.org/zap"
 )
 
@@ -19,17 +18,6 @@ type api struct {
 	db     *postgresql.Db
 	log    *zap.Logger
 	cfg    *configs.Config
-}
-
-var (
-	opsProcessed = prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "TestConstructor",
-		Help: "The total number of processed events",
-	})
-)
-
-func init() {
-	prometheus.MustRegister(opsProcessed)
 }
 
 func New(db *postgresql.Db, logger *zap.Logger, cfg *configs.Config) *api {
@@ -44,16 +32,8 @@ func New(db *postgresql.Db, logger *zap.Logger, cfg *configs.Config) *api {
 }
 
 func (s *api) RunApp() error {
-	corsOptions := cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Authorization", "Content-Type", "X-Requested-With"},
-		AllowCredentials: false,
-	}
-
-	corsHandler := cors.New(corsOptions).Handler(s.router)
-	s.log.Sugar().Infof("Server run on http://localhost" + s.addr)
-	return http.ListenAndServe(s.addr, corsHandler)
+	handler := middleware.DefaultCORSMiddleware()
+	return http.ListenAndServe(s.addr, handler(s.router))
 }
 
 func (s *api) FillEndpoints() {

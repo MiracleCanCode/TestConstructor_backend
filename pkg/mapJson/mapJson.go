@@ -3,7 +3,7 @@ package mapjson
 import (
 	"net/http"
 
-	"github.com/server/internal/utils/json"
+	"github.com/server/pkg/json"
 	"go.uber.org/zap"
 )
 

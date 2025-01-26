@@ -4,29 +4,29 @@ import (
 	"errors"
 
 	"github.com/server/configs"
-	"github.com/server/dtos"
-	"github.com/server/internal/utils/jwt"
-	"github.com/server/repository"
+	"github.com/server/internal/dtos"
+	"github.com/server/internal/repository"
+	"github.com/server/pkg/jwt"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type IAuth interface {
+type AuthInterface interface {
 	Login(data *dtos.LoginRequest) (*dtos.LoginResponse, error)
 	Registration(data *dtos.RegistrationRequest) (*dtos.RegistrationResponse, error)
 }
 
 type Auth struct {
-	userRepo      repository.IUser
-	authRepo      repository.IAuth
+	userRepo      repository.UserInterface
+	authRepo      repository.AuthInterface
 	logger        *zap.Logger
 	tokenProvider jwt.JWT
 	config        *configs.Config
 }
 
 func NewAuth(
-	userRepo repository.IUser,
-	authRepo repository.IAuth,
+	userRepo repository.UserInterface,
+	authRepo repository.AuthInterface,
 	logger *zap.Logger,
 	tokenProvider jwt.JWT,
 	config *configs.Config,
