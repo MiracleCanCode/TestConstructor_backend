@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -8,24 +9,52 @@ import (
 )
 
 type Config struct {
-	DB         string
-	PORT       string
-	SECRET     string
-	PRODACTION bool
+	DB     string
+	PORT   string
+	SECRET string
 }
 
-func Load(log *zap.Logger) *Config {
+const PRODACTION bool = true
 
-	if err := godotenv.Load(".env.local"); err != nil {
-		log.Error("Failed get env file", zap.Error(err))
+func Load(log *zap.Logger) (*Config, error) {
+	var envFile string
+
+	if PRODACTION {
+		envFile = ".env.prodaction"
+	} else {
+		envFile = ".env.local"
 	}
-	db := os.Getenv("DB")
-	port := os.Getenv("PORT")
+
+	if err := godotenv.Load(envFile); err != nil {
+		if os.IsNotExist(err) {
+			log.Warn("Env file not found", zap.String("file", envFile))
+		} else {
+			log.Error("Failed to load env file", zap.String("file", envFile), zap.Error(err))
+			return nil, fmt.Errorf("failed to load %s: %w", envFile, err)
+		}
+	}
+
+	db, ok := os.LookupEnv("DB")
+	if !ok {
+		log.Error("DB env variable not set")
+		return nil, fmt.Errorf("DB env variable not set")
+	}
+
+	port, ok := os.LookupEnv("PORT")
+	if !ok {
+		log.Error("PORT env variable not set")
+		return nil, fmt.Errorf("PORT env variable not set")
+	}
+
+	secret, ok := os.LookupEnv("SECRET")
+	if !ok {
+		log.Warn("SECRET env variable not set. Using default secret!")
+		secret = "SUPERSECRETKEYFORBESTAPPINTHEWORLD"
+	}
 
 	return &Config{
-		DB:         db,
-		PORT:       port,
-		SECRET:     "SUPERSECRETKEYFORBESTAPPINTHEWORLD",
-		PRODACTION: false,
-	}
+		DB:     db,
+		PORT:   port,
+		SECRET: secret,
+	}, nil
 }

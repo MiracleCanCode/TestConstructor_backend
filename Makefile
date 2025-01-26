@@ -22,6 +22,9 @@ lint:
 
 docker-compose:
 	$(DOCKERCOMPOSE) -f $(DOCKER_COMPOSE_DIR) up --build
+   
+docker-compose-run:
+	$(DOCKERCOMPOSE) -f $(DOCKER_COMPOSE_DIR) up
 
 build:
 	$(GO) build $(GOFLAGS) -o $(BINARY_NAME) $(SRC_DIR)

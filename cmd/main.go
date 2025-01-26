@@ -10,9 +10,18 @@ import (
 
 func main() {
 	log := logger.Logger(logger.DefaultLoggerConfig())
-	conf := configs.Load(log)
-	db := postgresql.New(conf, log)
+	conf, err := configs.Load(log)
+	if err != nil {
+		log.Error("Failed to load config", zap.Error(err))
+		return
+	}
+	db, err := postgresql.New(conf, log)
+	if err != nil {
+		log.Error("Failed to initialize db", zap.Error(err))
+		return
+	}
 	app := server.New(db, log, conf)
+
 	app.FillEndpoints()
 
 	if err := app.RunApp(); err != nil {

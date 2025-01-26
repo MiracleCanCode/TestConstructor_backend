@@ -16,7 +16,11 @@ type JWT struct {
 }
 
 func NewJwt(logger *zap.Logger) *JWT {
-	cfg := configs.Load(logger)
+	cfg, err := configs.Load(logger)
+	if err != nil {
+		logger.Error("Failed to load config", zap.Error(err))
+		return nil
+	}
 	return &JWT{
 		Secret: cfg.SECRET,
 	}

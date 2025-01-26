@@ -4,6 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/cors"
 	"github.com/server/configs"
 	delivery "github.com/server/delivery/http"
@@ -17,6 +19,17 @@ type api struct {
 	db     *postgresql.Db
 	log    *zap.Logger
 	cfg    *configs.Config
+}
+
+var (
+	opsProcessed = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "TestConstructor",
+		Help: "The total number of processed events",
+	})
+)
+
+func init() {
+	prometheus.MustRegister(opsProcessed)
 }
 
 func New(db *postgresql.Db, logger *zap.Logger, cfg *configs.Config) *api {
@@ -48,4 +61,5 @@ func (s *api) FillEndpoints() {
 	delivery.NewTestManager(s.log, s.db, s.router)
 	delivery.NewValidateResult(s.db, s.router, s.log)
 	delivery.NewUser(s.log, s.db, s.router, s.cfg)
+	s.router.Handle("/metrics", promhttp.Handler())
 }
