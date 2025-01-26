@@ -1,31 +1,37 @@
 package usecases
 
 import (
-	"github.com/server/internal/utils/db/postgresql"
+	"errors"
+
 	"github.com/server/models"
 	"github.com/server/repository"
 	"go.uber.org/zap"
 )
 
-type ValidateResult struct {
-	db     *postgresql.Db
-	repo   *repository.TestManager
-	logger *zap.Logger
+type Validator interface {
+	Validate(test *models.Test) (*float64, error)
 }
 
-func NewValidateResult(db *postgresql.Db, logger *zap.Logger) *ValidateResult {
-	return &ValidateResult{
-		db:     db,
-		logger: logger,
-		repo:   repository.NewTestManager(db),
+type TestValidator struct {
+	testRepo repository.ITestManager
+	logger   *zap.Logger
+}
+
+func NewTestValidator(
+	testRepo repository.ITestManager,
+	logger *zap.Logger,
+) *TestValidator {
+	return &TestValidator{
+		testRepo: testRepo,
+		logger:   logger,
 	}
 }
 
-func (s *ValidateResult) Validate(test *models.Test) (*float64, error) {
-	exampleTest, err := s.repo.GetTestById(test.ID)
+func (tv *TestValidator) Validate(test *models.Test) (*float64, error) {
+	exampleTest, err := tv.testRepo.GetTestById(test.ID)
 	if err != nil {
-		s.logger.Error("Failed to get test by id", zap.Error(err))
-		return nil, err
+		tv.logger.Error("Failed to get test by ID", zap.Error(err))
+		return nil, errors.New("failed to fetch test")
 	}
 
 	var (
@@ -34,8 +40,12 @@ func (s *ValidateResult) Validate(test *models.Test) (*float64, error) {
 	)
 
 	for _, question := range exampleTest.Questions {
-		for _, variant := range question.Variants {
-			for _, userQuestion := range test.Questions {
+		for _, userQuestion := range test.Questions {
+			if question.ID != userQuestion.ID {
+				continue
+			}
+
+			for _, variant := range question.Variants {
 				for _, userVariant := range userQuestion.Variants {
 					if variant.Name == userVariant.Name {
 						totalAnswers++
@@ -49,6 +59,7 @@ func (s *ValidateResult) Validate(test *models.Test) (*float64, error) {
 	}
 
 	if totalAnswers == 0 {
+		tv.logger.Warn("No answers provided")
 		return nil, nil
 	}
 

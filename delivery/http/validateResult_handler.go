@@ -10,6 +10,7 @@ import (
 	"github.com/server/internal/utils/json"
 	mapjson "github.com/server/internal/utils/mapJson"
 	"github.com/server/internal/utils/middleware"
+	"github.com/server/repository"
 	"github.com/server/usecases"
 	"go.uber.org/zap"
 )
@@ -17,16 +18,17 @@ import (
 type ValidateResult struct {
 	db      *postgresql.Db
 	router  *mux.Router
-	service *usecases.ValidateResult
+	service usecases.Validator
 	logger  *zap.Logger
 }
 
 func NewValidateResult(db *postgresql.Db, router *mux.Router, logger *zap.Logger) {
+	testManagerRepo := repository.NewTestManager(db)
 	handler := &ValidateResult{
 		db:      db,
 		router:  router,
 		logger:  logger,
-		service: usecases.NewValidateResult(db, logger),
+		service: usecases.NewTestValidator(testManagerRepo, logger),
 	}
 
 	handler.router.HandleFunc("/api/test/validate", middleware.IsAuth(handler.ValidateResult())).Methods("POST")

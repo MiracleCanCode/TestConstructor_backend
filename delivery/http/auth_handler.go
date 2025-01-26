@@ -8,95 +8,90 @@ import (
 	"github.com/server/dtos"
 	"github.com/server/internal/utils/db/postgresql"
 	"github.com/server/internal/utils/json"
-	mapjson "github.com/server/internal/utils/mapJson"
+	"github.com/server/internal/utils/jwt"
 	"github.com/server/repository"
 	"github.com/server/usecases"
 	"go.uber.org/zap"
 )
 
-type Auth struct {
-	log      *zap.Logger
-	db       *postgresql.Db
-	cfg      *configs.Config
-	service  *usecases.Auth
-	userRepo *repository.User
+type AuthHandler struct {
+	logger      *zap.Logger
+	authUsecase usecases.IAuth
+	userRepo    repository.IUser
 }
 
-func NewAuth(router *mux.Router, log *zap.Logger, db *postgresql.Db, cfg *configs.Config) {
-	service := usecases.NewAuth(db, log, cfg, repository.NewUser(db, log))
-	handler := &Auth{
-		log:      log,
-		db:       db,
-		cfg:      cfg,
-		service:  service,
-		userRepo: repository.NewUser(db, log),
+func NewAuthHandler(router *mux.Router, logger *zap.Logger, db *postgresql.Db, cfg *configs.Config) {
+	userRepo := repository.NewUser(db, logger)
+	authRepo := repository.NewAuth(db, logger)
+	jwtService := jwt.NewJwt(logger)
+	authUsecase := usecases.NewAuth(userRepo, authRepo, logger, *jwtService, cfg)
+
+	handler := &AuthHandler{
+		logger:      logger,
+		authUsecase: authUsecase,
+		userRepo:    userRepo,
 	}
 
-	router.HandleFunc("/api/auth/login", handler.Login()).Methods("POST")
-	router.HandleFunc("/api/auth/registration", handler.Registration()).Methods("POST")
+	router.HandleFunc("/api/auth/login", handler.Login).Methods(http.MethodPost)
+	router.HandleFunc("/api/auth/registration", handler.Registration).Methods(http.MethodPost)
 }
 
-func (h *Auth) Login() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
+func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	h.handleRequest(w, r, func(payload interface{}) (interface{}, error) {
+		req := payload.(*dtos.LoginRequest)
+		return h.authUsecase.Login(req)
+	}, &dtos.LoginRequest{})
+}
 
-		json := json.New(r, h.log, w)
-		message := mapjson.New(h.log, w, r)
-
-		var payload dtos.LoginRequest
-		if err := json.DecodeAndValidationBody(&payload); err != nil {
-			message.JsonError("Invalid request payload")
-			h.log.Warn("Invalid login request", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-			return
+func (h *AuthHandler) Registration(w http.ResponseWriter, r *http.Request) {
+	h.handleRequest(w, r, func(payload interface{}) (interface{}, error) {
+		req := payload.(*dtos.RegistrationRequest)
+		existingUser, _ := h.userRepo.GetUserByLogin(req.Login)
+		if existingUser != nil {
+			return nil, usecases.ErrLoginAlreadyTaken
 		}
 
-		user, err := h.service.Login(&payload)
-		if err != nil {
-			message.JsonError("Login failed: " + err.Error())
-			h.log.Warn("Login failed", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-			return
-		}
+		return h.authUsecase.Registration(req)
+	}, &dtos.RegistrationRequest{})
+}
 
-		if err := json.Encode(http.StatusOK, &user); err != nil {
-			h.log.Error("Failed to encode login response", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-			message.JsonError("Internal server error")
-			return
-		}
+func (h *AuthHandler) handleRequest(
+	w http.ResponseWriter,
+	r *http.Request,
+	handlerFunc func(interface{}) (interface{}, error),
+	payload interface{},
+) {
+	defer r.Body.Close()
+
+	jsonUtil := json.New(r, h.logger, w)
+	if err := jsonUtil.DecodeAndValidationBody(payload); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid request payload", err)
+		return
+	}
+
+	result, err := handlerFunc(payload)
+	if err != nil {
+		h.handleBusinessError(w, err)
+		return
+	}
+
+	if err := jsonUtil.Encode(http.StatusOK, result); err != nil {
+		h.respondError(w, http.StatusInternalServerError, "Failed to encode response", err)
 	}
 }
 
-func (h *Auth) Registration() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
-		json := json.New(r, h.log, w)
-		message := mapjson.New(h.log, w, r)
-
-		var payload dtos.RegistrationRequest
-		if err := json.DecodeAndValidationBody(&payload); err != nil {
-			message.JsonError("Invalid request payload")
-			h.log.Warn("Invalid registration request", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-			return
-		}
-
-		findUserByLogin, err := h.userRepo.GetUserByLogin(payload.Login)
-		if err == nil && findUserByLogin != nil {
-			message.JsonError("Login is already taken")
-			h.log.Warn("User login is already taken", zap.String("login", payload.Login), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-			return
-		}
-
-		user, err := h.service.Registration(&payload)
-		if err != nil {
-			message.JsonError("Registration failed: " + err.Error())
-			h.log.Error("Registration failed", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-			return
-		}
-
-		if err := json.Encode(http.StatusOK, user); err != nil {
-			message.JsonError("Failed to encode registration response, error: " + err.Error())
-			h.log.Error("Failed encode data", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-			return
-		}
+func (h *AuthHandler) handleBusinessError(w http.ResponseWriter, err error) {
+	switch err {
+	case usecases.ErrInvalidCredentials:
+		h.respondError(w, http.StatusUnauthorized, "Invalid login or password", err)
+	case usecases.ErrLoginAlreadyTaken:
+		h.respondError(w, http.StatusConflict, "Login is already taken", err)
+	default:
+		h.respondError(w, http.StatusInternalServerError, "Internal server error", err)
 	}
+}
+
+func (h *AuthHandler) respondError(w http.ResponseWriter, status int, message string, err error) {
+	h.logger.Warn(message, zap.Error(err))
+	http.Error(w, message, status)
 }

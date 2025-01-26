@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type TestManager struct {
+type TestManagerHandler struct {
 	logger   *zap.Logger
 	db       *postgresql.Db
 	service  *usecases.TestManager
@@ -24,11 +24,14 @@ type TestManager struct {
 }
 
 func NewTestManager(logger *zap.Logger, db *postgresql.Db, router *mux.Router) {
-	handler := &TestManager{
+	testManagerRepo := repository.NewTestManager(db)
+	userRepo := repository.NewUser(db, logger)
+	service := usecases.NewTestManager(testManagerRepo, userRepo, logger)
+	handler := &TestManagerHandler{
 		logger:   logger,
 		db:       db,
-		service:  usecases.NewTestManager(db, logger),
-		userRepo: repository.NewUser(db, logger),
+		service:  service,
+		userRepo: userRepo,
 	}
 
 	router.HandleFunc("/api/test/getById/{id}", middleware.IsAuth(handler.GetTestById())).Methods("GET")
@@ -38,7 +41,7 @@ func NewTestManager(logger *zap.Logger, db *postgresql.Db, router *mux.Router) {
 	router.HandleFunc("/api/test/changeActive", middleware.IsAuth(handler.ChangeActiveTestStatus())).Methods("PUT")
 }
 
-func (s *TestManager) GetAll() http.HandlerFunc {
+func (s *TestManagerHandler) GetAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
@@ -70,7 +73,7 @@ func (s *TestManager) GetAll() http.HandlerFunc {
 	}
 }
 
-func (s *TestManager) GetTestById() http.HandlerFunc {
+func (s *TestManagerHandler) GetTestById() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
@@ -105,7 +108,7 @@ func (s *TestManager) GetTestById() http.HandlerFunc {
 	}
 }
 
-func (s *TestManager) CreateTest() http.HandlerFunc {
+func (s *TestManagerHandler) CreateTest() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
@@ -143,7 +146,7 @@ func (s *TestManager) CreateTest() http.HandlerFunc {
 	}
 }
 
-func (s *TestManager) DeleteTest() http.HandlerFunc {
+func (s *TestManagerHandler) DeleteTest() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		jsonError := mapjson.New(s.logger, w, r)
@@ -185,7 +188,7 @@ func (s *TestManager) DeleteTest() http.HandlerFunc {
 	}
 }
 
-func (s *TestManager) ChangeActiveTestStatus() http.HandlerFunc {
+func (s *TestManagerHandler) ChangeActiveTestStatus() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		var payload dtos.UpdateTestActiveStatus

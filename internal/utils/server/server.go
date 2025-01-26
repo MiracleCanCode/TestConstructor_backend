@@ -57,7 +57,7 @@ func (s *api) RunApp() error {
 }
 
 func (s *api) FillEndpoints() {
-	delivery.NewAuth(s.router, s.log, s.db, s.cfg)
+	delivery.NewAuthHandler(s.router, s.log, s.db, s.cfg)
 	delivery.NewTestManager(s.log, s.db, s.router)
 	delivery.NewValidateResult(s.db, s.router, s.log)
 	delivery.NewUser(s.log, s.db, s.router, s.cfg)
