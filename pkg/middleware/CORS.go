@@ -14,10 +14,10 @@ func CORSHandler(options cors.Options) func(http.Handler) http.Handler {
 
 func DefaultCORSMiddleware() func(http.Handler) http.Handler {
 	options := cors.Options{
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   []string{"http://localhost:3000"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type", "X-Requested-With"},
-		AllowCredentials: false,
+		AllowCredentials: true,
 	}
 
 	return CORSHandler(options)

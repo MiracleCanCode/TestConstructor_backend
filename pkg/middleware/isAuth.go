@@ -2,19 +2,24 @@ package middleware
 
 import (
 	"net/http"
-	"strings"
+
+	"github.com/MiracleCanCode/example_configuration_logger/pkg/logger"
+	"github.com/server/pkg/cookie"
+	"go.uber.org/zap"
 )
 
 func IsAuth(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		token := strings.TrimPrefix(authHeader, "Bearer ")
+		log := logger.Logger(logger.DefaultLoggerConfig())
+		cookies := cookie.New(w, r, log)
+
+		token := cookies.Get("token")
 
 		if token == "" {
-			http.Error(w, "Unauthorized: No token provided", http.StatusUnauthorized)
+			log.Warn("Unauthorized access attempt", zap.String("path", r.URL.Path))
+			http.Redirect(w, r, "/auth", http.StatusFound)
 			return
 		}
-
 		next.ServeHTTP(w, r)
 	}
 }

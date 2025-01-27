@@ -2,12 +2,12 @@ package http
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/server/configs"
 	"github.com/server/internal/dtos"
 	"github.com/server/internal/repository"
+	"github.com/server/pkg/cookie"
 	"github.com/server/pkg/db/postgresql"
 	"github.com/server/pkg/json"
 	"github.com/server/pkg/jwt"
@@ -41,14 +41,14 @@ func NewUser(logger *zap.Logger, db *postgresql.Db, router *mux.Router, cfg *con
 func (s *User) GetUserData() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
-
+		JWT := jwt.NewJwt(s.logger)
+		cookies := cookie.New(w, r, s.logger)
 		jsonHelper := json.New(r, s.logger, w)
 		jsonData := mapjson.New(s.logger, w, r)
 
-		authHeader := r.Header.Get("Authorization")
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		token := cookies.Get("token")
 
-		_, claims, err := jwt.NewJwt(s.logger).VerifyToken(tokenString)
+		_, claims, err := JWT.VerifyToken(token)
 		if err != nil {
 			return
 		}

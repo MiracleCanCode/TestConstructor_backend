@@ -14,7 +14,7 @@ type Config struct {
 	SECRET string
 }
 
-const PRODACTION bool = true
+const PRODACTION bool = false
 
 func Load(log *zap.Logger) (*Config, error) {
 	var envFile string

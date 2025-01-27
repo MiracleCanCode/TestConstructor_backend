@@ -3,7 +3,6 @@ package jwt
 import (
 	"errors"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -63,15 +62,19 @@ func (s *JWT) VerifyToken(tokenString string) (*jwt.Token, jwt.MapClaims, error)
 	return token, claims, nil
 }
 
-func (s *JWT) ExtractUserFromAuthHeader(r *http.Request) (string, error) {
-	authHeader := r.Header.Get("Authorization")
-	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-
+func (s *JWT) ExtractUserFromCookie(r *http.Request, cookieName string) (string, error) {
+	cookie, err := r.Cookie(cookieName)
+	if err != nil {
+		if errors.Is(err, http.ErrNoCookie) {
+			return "", errors.New("auth cookie not found")
+		}
+		return "", errors.New("failed to retrieve auth cookie")
+	}
+	tokenString := cookie.Value
 	_, claims, err := s.VerifyToken(tokenString)
 	if err != nil {
 		return "", err
 	}
-
 	userLogin, ok := claims["login"].(string)
 	if !ok {
 		return "", errors.New("invalid login claim type")

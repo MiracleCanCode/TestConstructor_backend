@@ -32,8 +32,9 @@ func New(db *postgresql.Db, logger *zap.Logger, cfg *configs.Config) *api {
 }
 
 func (s *api) RunApp() error {
-	handler := middleware.DefaultCORSMiddleware()
-	return http.ListenAndServe(s.addr, handler(s.router))
+	s.FillEndpoints()
+	handler := middleware.DefaultCORSMiddleware()(s.router)
+	return http.ListenAndServe(s.addr, handler)
 }
 
 func (s *api) FillEndpoints() {

@@ -87,7 +87,7 @@ func (s *TestManagerHandler) GetTestById() http.HandlerFunc {
 			return
 		}
 
-		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromAuthHeader(r)
+		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
 		if err != nil {
 			s.logger.Error("Failed extract login from user token", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
 			return
@@ -122,7 +122,7 @@ func (s *TestManagerHandler) CreateTest() http.HandlerFunc {
 			return
 		}
 
-		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromAuthHeader(r)
+		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
 		if err != nil {
 			s.logger.Error("Failed extract login from user token", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
 			return
@@ -156,7 +156,7 @@ func (s *TestManagerHandler) DeleteTest() http.HandlerFunc {
 			s.logger.Error("Failed parse id", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
 			return
 		}
-		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromAuthHeader(r)
+		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
 		if err != nil {
 			s.logger.Error("Failed extract login from user token", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
 			return
@@ -196,7 +196,7 @@ func (s *TestManagerHandler) ChangeActiveTestStatus() http.HandlerFunc {
 		json := json.New(r, s.logger, w)
 		jsonError := mapjson.New(s.logger, w, r)
 
-		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromAuthHeader(r)
+		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
 		if err != nil {
 			s.logger.Error("Failed to extract data from token", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
 			return

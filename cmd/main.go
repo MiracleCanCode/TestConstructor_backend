@@ -22,8 +22,6 @@ func main() {
 	}
 	app := server.New(db, log, conf)
 
-	app.FillEndpoints()
-
 	if err := app.RunApp(); err != nil {
 		log.Error("Failed to run server", zap.Error(err))
 		return

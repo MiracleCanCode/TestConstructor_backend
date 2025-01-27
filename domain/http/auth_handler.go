@@ -8,6 +8,7 @@ import (
 	"github.com/server/internal/dtos"
 	"github.com/server/internal/repository"
 	"github.com/server/internal/usecases"
+	"github.com/server/pkg/cookie"
 	"github.com/server/pkg/db/postgresql"
 	"github.com/server/pkg/json"
 	"github.com/server/pkg/jwt"
@@ -40,7 +41,15 @@ func NewAuthHandler(router *mux.Router, logger *zap.Logger, db *postgresql.Db, c
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	h.handleRequest(w, r, func(payload interface{}) (interface{}, error) {
 		req := payload.(*dtos.LoginRequest)
-		return h.authUsecase.Login(req)
+		cookies := cookie.New(w, r, h.logger)
+		token, err := h.authUsecase.Login(req)
+		if err != nil {
+			h.logger.Error("Failed login", zap.Error(err))
+		}
+
+		cookies.Set("token", token.Token)
+
+		return token, nil
 	}, &dtos.LoginRequest{})
 }
 
