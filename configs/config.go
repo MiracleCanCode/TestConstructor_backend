@@ -9,9 +9,10 @@ import (
 )
 
 type Config struct {
-	DB     string
-	PORT   string
-	SECRET string
+	DB         string
+	PORT       string
+	SECRET     string
+	CLIENT_URL string
 }
 
 const PRODACTION bool = false
@@ -40,6 +41,12 @@ func Load(log *zap.Logger) (*Config, error) {
 		return nil, fmt.Errorf("DB env variable not set")
 	}
 
+	clientUrl, ok := os.LookupEnv("CLIENT_URL")
+	if !ok {
+		log.Error("CLIENT_URL env variable not set")
+		return nil, fmt.Errorf("CLIENT_URL env variable not set")
+	}
+
 	port, ok := os.LookupEnv("PORT")
 	if !ok {
 		log.Error("PORT env variable not set")
@@ -53,8 +60,9 @@ func Load(log *zap.Logger) (*Config, error) {
 	}
 
 	return &Config{
-		DB:     db,
-		PORT:   port,
-		SECRET: secret,
+		DB:         db,
+		PORT:       port,
+		SECRET:     secret,
+		CLIENT_URL: clientUrl,
 	}, nil
 }

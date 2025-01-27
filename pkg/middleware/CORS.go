@@ -1,8 +1,11 @@
 package middleware
 
 import (
-	"github.com/rs/cors"
 	"net/http"
+
+	"github.com/MiracleCanCode/example_configuration_logger/pkg/logger"
+	"github.com/rs/cors"
+	"github.com/server/configs"
 )
 
 func CORSHandler(options cors.Options) func(http.Handler) http.Handler {
@@ -13,8 +16,13 @@ func CORSHandler(options cors.Options) func(http.Handler) http.Handler {
 }
 
 func DefaultCORSMiddleware() func(http.Handler) http.Handler {
+	log := logger.Logger(logger.DefaultLoggerConfig())
+	cfg, err := configs.Load(log)
+	if err != nil {
+		log.Error("Failed to load config")
+	}
 	options := cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedOrigins:   []string{cfg.CLIENT_URL},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type", "X-Requested-With"},
 		AllowCredentials: true,

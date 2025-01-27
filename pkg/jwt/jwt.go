@@ -82,3 +82,17 @@ func (s *JWT) ExtractUserFromCookie(r *http.Request, cookieName string) (string,
 
 	return userLogin, nil
 }
+
+func (s *JWT) RefreshAccessToken(refreshToken string) (string, error) {
+	_, claims, err := s.VerifyToken(refreshToken)
+	if err != nil {
+		return "", errors.New("invalid refresh token")
+	}
+
+	userLogin, ok := claims["login"].(string)
+	if !ok {
+		return "", errors.New("invalid login claim type")
+	}
+
+	return s.CreateAccessToken(userLogin)
+}

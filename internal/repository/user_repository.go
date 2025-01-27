@@ -57,7 +57,7 @@ func (s *User) CreateUser(user models.User) error {
 		return err
 	}
 	user.Password = string(hashedPassword)
-
+	s.logger.Info(user.RefreshToken)
 	if err := s.db.Create(&user).Error; err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (s *User) CreateUser(user models.User) error {
 func (s *User) GetUserByLogin(login string) (*models.User, error) {
 	var user models.User
 
-	if err := s.db.Select("id, login, email, name, avatar, password").
+	if err := s.db.Select("id, login, email, name, avatar, password, refresh_token").
 		Where("login = ?", login).
 		First(&user).Error; err != nil {
 		s.logger.Error("Failed to get user by login", zap.Error(err))
@@ -81,7 +81,7 @@ func (s *User) GetUserByLogin(login string) (*models.User, error) {
 func (s *User) GetUserByEmail(email string) (*models.User, error) {
 	var user models.User
 
-	if err := s.db.Select("id, login, email, name, avatar").
+	if err := s.db.Select("id, login, email, name, avatar, refresh_token").
 		Where("email = ?", email).
 		First(&user).Error; err != nil {
 		s.logger.Error("Failed to get user by email", zap.Error(err))

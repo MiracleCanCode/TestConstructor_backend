@@ -66,6 +66,7 @@ func (uc *Auth) Login(data *dtos.LoginRequest) (*dtos.LoginResponse, error) {
 
 	if err := uc.authRepo.SaveRefreshToken(user.Login, refreshToken); err != nil {
 		uc.logger.Error("Failed to save refresh token", zap.Error(err))
+		return nil, errors.New("internal server error")
 	}
 
 	return &dtos.LoginResponse{
@@ -79,5 +80,23 @@ func (uc *Auth) Registration(data *dtos.RegistrationRequest) (*dtos.Registration
 		uc.logger.Error("Failed to register user", zap.Error(err))
 		return nil, errors.New("failed to register user")
 	}
-	return &dtos.RegistrationResponse{}, nil
+
+	refreshToken, err := uc.tokenProvider.CreateRefreshToken(data.Login)
+	if err != nil {
+		uc.logger.Error("Failed to create refresh token", zap.Error(err))
+		return nil, errors.New("internal server error")
+	}
+
+	if err := uc.authRepo.SaveRefreshToken(data.Login, refreshToken); err != nil {
+		uc.logger.Error("Failed to save refresh token", zap.Error(err))
+		return nil, errors.New("failed to save refresh token")
+	}
+
+	return &dtos.RegistrationResponse{
+		Name:         data.Name,
+		Login:        data.Login,
+		Avatar:       data.Avatar,
+		Email:        data.Email,
+		RefreshToken: refreshToken,
+	}, nil
 }

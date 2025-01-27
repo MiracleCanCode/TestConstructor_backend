@@ -55,29 +55,18 @@ func (s *User) GetUserData() http.HandlerFunc {
 
 		userLogin := claims["login"].(string)
 
-		userChan := make(chan *dtos.GetUserByLoginResponse, 1)
-		errChan := make(chan error, 1)
-
-		go func() {
-			user, err := s.repository.GetUserByLogin(userLogin)
-			modifiedUser := dtos.ToGetUserByLoginResponse(user)
-			if err != nil {
-				errChan <- err
-				return
-			}
-			userChan <- modifiedUser
-		}()
-
-		select {
-		case user := <-userChan:
-			if err := jsonHelper.Encode(200, user); err != nil {
-				s.logger.Error("Failed to encode user data", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-				jsonData.JsonError("Failed to encode user data: " + err.Error())
-				return
-			}
-		case err := <-errChan:
+		user, err := s.repository.GetUserByLogin(userLogin)
+		if err != nil {
 			s.logger.Error("Failed to get user by login", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		modifiedUser := dtos.ToGetUserByLoginResponse(user)
+
+		if err := jsonHelper.Encode(200, modifiedUser); err != nil {
+			s.logger.Error("Failed to encode user data", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			jsonData.JsonError("Failed to encode user data: " + err.Error())
 			return
 		}
 	}

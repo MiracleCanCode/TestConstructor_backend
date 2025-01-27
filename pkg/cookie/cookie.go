@@ -11,6 +11,7 @@ import (
 type CookieInterface interface {
 	Set(name string, value string)
 	Get(name string) string
+	Delete(name string)
 }
 
 type Cookie struct {
@@ -34,8 +35,8 @@ func (s *Cookie) Set(name string, value string) {
 		Path:     "/",
 		MaxAge:   900,
 		HttpOnly: false,
-		Secure:   configs.PRODACTION,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   true,
+		SameSite: http.SameSiteNoneMode,
 	}
 
 	http.SetCookie(s.w, &cookie)
@@ -55,4 +56,17 @@ func (s *Cookie) Get(name string) string {
 	}
 
 	return cookie.Value
+}
+
+func (s *Cookie) Delete(name string) {
+	cookie := http.Cookie{
+		Name:     name,
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: false,
+		Secure:   configs.PRODACTION,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	http.SetCookie(s.w, &cookie)
 }
