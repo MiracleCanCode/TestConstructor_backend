@@ -33,9 +33,9 @@ func NewUser(logger *zap.Logger, db *postgresql.Db, router *mux.Router, cfg *con
 		cfg:        cfg,
 	}
 
-	router.HandleFunc("/api/user/getData", middleware.IsAuth(handler.GetUserData())).Methods("GET")
-	router.HandleFunc("/api/user/update", middleware.IsAuth(handler.UpdateUser())).Methods("POST")
-	router.HandleFunc("/api/user/getByLogin", middleware.IsAuth(handler.GetUserByLogin())).Methods("POST")
+	router.HandleFunc("/api/user/getData", middleware.IsAuth(handler.GetUserData())).Methods(http.MethodGet)
+	router.HandleFunc("/api/user/update", middleware.IsAuth(handler.UpdateUser())).Methods(http.MethodPost)
+	router.HandleFunc("/api/user/getByLogin", middleware.IsAuth(handler.GetUserByLogin())).Methods(http.MethodPost)
 }
 
 func (s *User) GetUserData() http.HandlerFunc {

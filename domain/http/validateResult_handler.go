@@ -31,7 +31,7 @@ func NewValidateResult(db *postgresql.Db, router *mux.Router, logger *zap.Logger
 		service: usecases.NewTestValidator(testManagerRepo, logger),
 	}
 
-	handler.router.HandleFunc("/api/test/validate", middleware.IsAuth(handler.ValidateResult())).Methods("POST")
+	handler.router.HandleFunc("/api/test/validate", middleware.IsAuth(handler.ValidateResult())).Methods(http.MethodPost)
 }
 
 func (s *ValidateResult) ValidateResult() http.HandlerFunc {
