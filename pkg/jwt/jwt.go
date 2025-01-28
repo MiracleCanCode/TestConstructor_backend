@@ -10,6 +10,15 @@ import (
 	"go.uber.org/zap"
 )
 
+type JWTInterface interface {
+	createToken(login string, duration time.Duration) (string, error)
+	CreateAccessToken(login string) (string, error)
+	CreateRefreshToken(login string) (string, error)
+	VerifyToken(tokenString string) (*jwt.Token, jwt.MapClaims, error)
+	ExtractUserFromCookie(r *http.Request, cookieName string) (string, error)
+	RefreshAccessToken(refreshToken string) (string, error)
+}
+
 type JWT struct {
 	Secret string
 }

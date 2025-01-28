@@ -42,25 +42,27 @@ func NewUser(logger *zap.Logger, db *postgresql.Db, router *mux.Router, cfg *con
 func (s *User) GetUserData() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
+
+		errorHandler := errors.New(s.logger, w, r)
 		JWT := jwt.NewJwt(s.logger)
 		jsonHelper := json.New(r, s.logger, w)
 
 		login, err := JWT.ExtractUserFromCookie(r, "token")
 		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to extract login from cookie", constants.InternalServerError)
+			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 
 		user, err := s.repository.GetUserByLogin(login)
 		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to get user by login", constants.InternalServerError)
+			errorHandler.HandleError(constants.ErrGetUserData, http.StatusNotFound, err)
 			return
 		}
 
 		modifiedUser := dtos.ToGetUserByLoginResponse(user)
 
 		if err := jsonHelper.Encode(200, modifiedUser); err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to encode user data", constants.InternalServerError)
+			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 	}
@@ -71,17 +73,18 @@ func (s *User) UpdateUser() http.HandlerFunc {
 		defer r.Body.Close()
 
 		var payload dtos.UpdateUserRequest
+		errorHandler := errors.New(s.logger, w, r)
 		json := json.New(r, s.logger, w)
 		jsonResponses := mapjson.New(s.logger, w, r)
 
 		if err := json.DecodeAndValidationBody(&payload); err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to decode data", constants.InternalServerError)
+			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 
 		err := s.repository.UpdateUser(&payload)
 		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to update data", constants.ErrorUpdateUserData)
+			errorHandler.HandleError(constants.ErrorUpdateUserData, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -94,21 +97,22 @@ func (s *User) GetUserByLogin() http.HandlerFunc {
 		defer r.Body.Close()
 
 		var payload dtos.GetUserByLoginRequest
+		errorHandler := errors.New(s.logger, w, r)
 		json := json.New(r, s.logger, w)
 
 		if err := json.DecodeAndValidationBody(&payload); err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to decode payload body", constants.InternalServerError)
+			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 
 		user, err := s.repository.GetUserByLogin(payload.Login)
 		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to get user by login", constants.NotFoundUser)
+			errorHandler.HandleError(constants.NotFoundUser, http.StatusNotFound, err)
 			return
 		}
 
 		if err := json.Encode(200, user); err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to encode data", constants.InternalServerError)
+			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 	}

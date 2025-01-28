@@ -44,25 +44,29 @@ func NewTestManager(logger *zap.Logger, db *postgresql.Db, router *mux.Router) {
 
 func (s *TestManagerHandler) GetAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
+		defer func() {
+			if err := r.Body.Close(); err != nil {
+				s.logger.Warn("Failed to close request body", zap.Error(err))
+			}
+		}()
+		errors := errors.New(s.logger, w, r)
 		var payload dtos.GetAllTestsRequest
 		decoderAndEncoder := json.New(r, s.logger, w)
 
 		if err := decoderAndEncoder.DecodeAndValidationBody(&payload); err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to decode data", constants.InternalServerError)
+			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 
 		getTests, count, err := s.service.GetAllTests(payload.UserId, payload.Limit, payload.Offset)
 		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to get tests", constants.ErrorGetAllTests)
+			errors.HandleError(constants.ErrorGetAllTests, http.StatusNotFound, err)
 			return
 		}
 		tests := dtos.SetGetAllTests(getTests, count)
 
 		if err := decoderAndEncoder.Encode(http.StatusOK, tests); err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to encode data", constants.InternalServerError)
+			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 	}
@@ -70,31 +74,35 @@ func (s *TestManagerHandler) GetAll() http.HandlerFunc {
 
 func (s *TestManagerHandler) GetTestById() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-
+		defer func() {
+			if err := r.Body.Close(); err != nil {
+				s.logger.Warn("Failed to close request body", zap.Error(err))
+			}
+		}()
+		errors := errors.New(s.logger, w, r)
 		decoderAndEncoder := json.New(r, s.logger, w)
 		id := mux.Vars(r)["id"]
 		parseId, err := strconv.ParseUint(id, 10, 64)
 		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to parse id", constants.InternalServerError)
+			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 
 		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
 		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to extract login from user token", constants.InternalServerError)
+			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 
 		getTest, role, err := s.service.GetTestById(uint(parseId), userLogin)
 		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to get test", constants.GetTestByIdError)
+			errors.HandleError(constants.GetTestByIdError, http.StatusNotFound, err)
 			return
 		}
 
 		res := dtos.MapTestModelToGetTestByIdResponse(getTest, role)
 		if err := decoderAndEncoder.Encode(http.StatusOK, res); err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to encode data", constants.InternalServerError)
+			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 	}
@@ -102,32 +110,37 @@ func (s *TestManagerHandler) GetTestById() http.HandlerFunc {
 
 func (s *TestManagerHandler) CreateTest() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
+		defer func() {
+			if err := r.Body.Close(); err != nil {
+				s.logger.Warn("Failed to close request body", zap.Error(err))
+			}
+		}()
 
+		errors := errors.New(s.logger, w, r)
 		var payload dtos.CreateTestRequest
 		json := json.New(r, s.logger, w)
 
 		if err := json.DecodeAndValidationBody(&payload); err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to decode body", constants.InternalServerError)
+			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 
 		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
 		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to extract login from user token", constants.InternalServerError)
+			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 
 		user, err := s.userRepo.GetUserByLogin(userLogin)
 		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to get user by login", constants.NotFoundUser)
+			errors.HandleError(constants.NotFoundUser, http.StatusNotFound, err)
 			return
 		}
 		testModel := dtos.MapCreateTestRequestToModel(&payload, user.ID)
 
 		err = s.service.CreateTest(testModel)
 		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to create test", constants.ErrorCreateTest)
+			errors.HandleError(constants.ErrorCreateTest, http.StatusBadRequest, err)
 			return
 		}
 
@@ -136,23 +149,28 @@ func (s *TestManagerHandler) CreateTest() http.HandlerFunc {
 
 func (s *TestManagerHandler) DeleteTest() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-		testId := mux.Vars(r)["id"]
+		defer func() {
+			if err := r.Body.Close(); err != nil {
+				s.logger.Warn("Failed to close request body", zap.Error(err))
+			}
+		}()
 
+		errors := errors.New(s.logger, w, r)
+		testId := mux.Vars(r)["id"]
 		parseId, err := strconv.ParseUint(testId, 10, 64)
 		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed parse id", constants.InternalServerError)
+			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 
 		login, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
 		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed extract login from user token", constants.InternalServerError)
+			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 
 		if err := s.service.DeleteTest(uint(parseId), login); err != nil {
-			errors.HandleError(s.logger, w, r, err, "Error test delete", constants.ErrorDeleteTest)
+			errors.HandleError(constants.ErrorDeleteTest, http.StatusInternalServerError, err)
 			return
 		}
 
@@ -161,24 +179,29 @@ func (s *TestManagerHandler) DeleteTest() http.HandlerFunc {
 
 func (s *TestManagerHandler) ChangeActiveTestStatus() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
-		var payload dtos.UpdateTestActiveStatus
+		defer func() {
+			if err := r.Body.Close(); err != nil {
+				s.logger.Warn("Failed to close request body", zap.Error(err))
+			}
+		}()
 
+		errors := errors.New(s.logger, w, r)
+		var payload dtos.UpdateTestActiveStatus
 		json := json.New(r, s.logger, w)
 
 		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
 		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to extract data from token", constants.InternalServerError)
+			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 
 		if err := json.DecodeAndValidationBody(&payload); err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to decode body", constants.InternalServerError)
+			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 
 		if err := s.service.ChangeActiveStatus(payload.IsActive, payload.TestId, userLogin); err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to change test active status", constants.ErrorChangeActiveTest)
+			errors.HandleError(constants.ErrorChangeActiveTest, http.StatusInternalServerError, err)
 			return
 		}
 

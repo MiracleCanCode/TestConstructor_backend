@@ -41,17 +41,18 @@ func (s *ValidateResult) ValidateResult() http.HandlerFunc {
 		defer r.Body.Close()
 
 		var payload dtos.ValidateResultRequestPayload
+		errorHandler := errors.New(s.logger, w, r)
 		jsonDecodeAndEncode := json.New(r, s.logger, w)
 		jsonResponse := mapjson.New(s.logger, w, r)
 
 		if err := jsonDecodeAndEncode.Decode(&payload); err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to decode body", constants.InternalServerError)
+			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 
 		result, err := s.service.Validate(payload.Test)
 		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Validation failed", constants.InternalServerError)
+			errorHandler.HandleError(constants.ErrTestValidation, http.StatusBadRequest, err)
 			return
 		}
 
