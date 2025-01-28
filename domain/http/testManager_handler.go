@@ -88,7 +88,6 @@ func (s *TestManagerHandler) GetTestById() http.HandlerFunc {
 
 		getTest, role, err := s.service.GetTestById(uint(parseId), userLogin)
 		if err != nil {
-			http.Redirect(w, r, "/not_found", http.StatusFound)
 			errors.HandleError(s.logger, w, r, err, "Failed to get test", constants.GetTestByIdError)
 			return
 		}
@@ -146,30 +145,13 @@ func (s *TestManagerHandler) DeleteTest() http.HandlerFunc {
 			return
 		}
 
-		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
+		login, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
 		if err != nil {
 			errors.HandleError(s.logger, w, r, err, "Failed extract login from user token", constants.InternalServerError)
 			return
 		}
 
-		test, _, err := s.service.GetTestById(uint(parseId), userLogin)
-		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to get test", constants.GetTestByIdError)
-			return
-		}
-
-		user, err := s.userRepo.GetUserByLogin(userLogin)
-		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to get user by login", constants.NotFoundUser)
-			return
-		}
-
-		if test.UserID != user.ID {
-			errors.HandleError(s.logger, w, r, err, "Error delete test", constants.ErrorDeleteTest)
-			return
-		}
-
-		if err := s.service.DeleteTest(uint(parseId)); err != nil {
+		if err := s.service.DeleteTest(uint(parseId), login); err != nil {
 			errors.HandleError(s.logger, w, r, err, "Error test delete", constants.ErrorDeleteTest)
 			return
 		}

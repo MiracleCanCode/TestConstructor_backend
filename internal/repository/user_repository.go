@@ -13,6 +13,7 @@ type UserInterface interface {
 	CreateUser(user models.User) error
 	GetUserByLogin(login string) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
+	DeleteRefreshToken(login string) error
 }
 
 type User struct {
@@ -89,4 +90,20 @@ func (s *User) GetUserByEmail(email string) (*models.User, error) {
 	}
 
 	return &user, nil
+}
+
+func (s *User) DeleteRefreshToken(login string) error {
+	var user models.User
+
+	if err := s.db.Where("login = ?", login).First(&user).Error; err != nil {
+		return err
+	}
+
+	user.RefreshToken = ""
+
+	if err := s.db.Save(&user).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -67,7 +67,21 @@ func (s *TestManager) CreateTest(data *models.Test) error {
 	return s.testRepo.CreateTest(data)
 }
 
-func (s *TestManager) DeleteTest(id uint) error {
+func (s *TestManager) DeleteTest(id uint, login string) error {
+	user, err := s.userRepo.GetUserByLogin(login)
+	if err != nil {
+		return errors.New(constants.ErrorDeleteTest)
+	}
+
+	test, _, err := s.GetTestById(id, login)
+	if err != nil {
+		return errors.New(constants.GetTestByIdError)
+	}
+
+	if test.UserID != user.ID {
+		return errors.New(constants.ErrorDeleteTest)
+	}
+
 	return s.testRepo.DeleteTest(id)
 }
 

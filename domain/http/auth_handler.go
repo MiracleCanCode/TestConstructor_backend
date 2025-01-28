@@ -8,7 +8,6 @@ import (
 	"github.com/server/internal/dtos"
 	"github.com/server/internal/repository"
 	"github.com/server/internal/usecases"
-	"github.com/server/pkg/cookie"
 	"github.com/server/pkg/db/postgresql"
 	"github.com/server/pkg/errors"
 	"github.com/server/pkg/json"
@@ -56,15 +55,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		h.errorHandler.HandleError(w, r, err)
 		return
 	}
-
-	cookies := cookie.New(w, r, h.logger)
-	token, err := h.authUsecase.Login(&payload)
+	token, err := h.authUsecase.Login(&payload, w, r)
 	if err != nil {
 		h.errorHandler.HandleError(w, r, err)
 		return
 	}
-
-	cookies.Set("token", token.Token)
 
 	if err := jsonUtil.Encode(http.StatusOK, token); err != nil {
 		h.errorHandler.HandleError(w, r, err)
@@ -93,4 +88,13 @@ func (h *AuthHandler) Registration(w http.ResponseWriter, r *http.Request) {
 	if err := jsonUtil.Encode(http.StatusOK, result); err != nil {
 		h.errorHandler.HandleError(w, r, err)
 	}
+}
+
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if err := r.Body.Close(); err != nil {
+			h.logger.Warn("Failed to close request body", zap.Error(err))
+		}
+	}()
+
 }

@@ -8,7 +8,6 @@ import (
 	"github.com/server/internal/dtos"
 	"github.com/server/internal/repository"
 	"github.com/server/pkg/constants"
-	"github.com/server/pkg/cookie"
 	"github.com/server/pkg/db/postgresql"
 	"github.com/server/pkg/errors"
 	"github.com/server/pkg/json"
@@ -44,20 +43,15 @@ func (s *User) GetUserData() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		JWT := jwt.NewJwt(s.logger)
-		cookies := cookie.New(w, r, s.logger)
 		jsonHelper := json.New(r, s.logger, w)
 
-		token := cookies.Get("token")
-
-		_, claims, err := JWT.VerifyToken(token)
+		login, err := JWT.ExtractUserFromCookie(r, "token")
 		if err != nil {
-			errors.HandleError(s.logger, w, r, err, "Failed to verify token", constants.InternalServerError)
+			errors.HandleError(s.logger, w, r, err, "Failed to extract login from cookie", constants.InternalServerError)
 			return
 		}
 
-		userLogin := claims["login"].(string)
-
-		user, err := s.repository.GetUserByLogin(userLogin)
+		user, err := s.repository.GetUserByLogin(login)
 		if err != nil {
 			errors.HandleError(s.logger, w, r, err, "Failed to get user by login", constants.InternalServerError)
 			return
