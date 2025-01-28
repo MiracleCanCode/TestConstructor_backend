@@ -22,9 +22,9 @@ func NewAuth(db *postgresql.Db, logger *zap.Logger) *Auth {
 	}
 }
 
-func (r *Auth) SaveRefreshToken(login string, refreshToken string) error {
+func (s *Auth) SaveRefreshToken(login string, refreshToken string) error {
 	user := &models.User{}
-	if err := r.db.Model(user).Where("login = ?", login).Update("refresh_token", refreshToken).Error; err != nil {
+	if err := s.db.Model(user).Where("login = ?", login).Update("refresh_token", refreshToken).Error; err != nil {
 		return err
 	}
 	return nil

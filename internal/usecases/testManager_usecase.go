@@ -5,6 +5,7 @@ import (
 
 	"github.com/server/internal/models"
 	"github.com/server/internal/repository"
+	"github.com/server/pkg/constants"
 	"go.uber.org/zap"
 )
 
@@ -34,48 +35,52 @@ func NewTestManager(
 	}
 }
 
-func (tm *TestManager) GetAllTests(userID uint, limit, offset int) ([]models.Test, int64, error) {
-	return tm.testRepo.GetAllTests(userID, offset, limit)
+func (s *TestManager) GetAllTests(userID uint, limit, offset int) ([]models.Test, int64, error) {
+	return s.testRepo.GetAllTests(userID, offset, limit)
 }
 
-func (tm *TestManager) GetTestById(id uint, userLogin string) (*models.Test, error) {
-	test, err := tm.testRepo.GetTestById(id)
+func (s *TestManager) GetTestById(id uint, userLogin string) (*models.Test, string, error) {
+	test, err := s.testRepo.GetTestById(id)
 	if err != nil {
-		tm.logger.Error("Failed to get test by id", zap.Error(err))
-		return nil, err
+		s.logger.Error("Failed to get test by id", zap.Error(err))
+		return nil, "", err
 	}
 
-	user, err := tm.userRepo.GetUserByLogin(userLogin)
+	user, err := s.userRepo.GetUserByLogin(userLogin)
 	if err != nil {
-		tm.logger.Error("Failed to get user by login", zap.Error(err))
-		return nil, err
+		s.logger.Error("Failed to get user by login", zap.Error(err))
+		return nil, "", err
 	}
 
 	if !test.IsActive && user.ID != test.UserID {
-		return nil, errors.New("test is private")
+		return nil, "", errors.New("test is private")
 	}
 
-	return test, nil
+	if user.ID != test.UserID {
+		return test, constants.PassingRole, nil
+	}
+
+	return test, constants.OwnerRole, nil
 }
 
-func (tm *TestManager) CreateTest(data *models.Test) error {
-	return tm.testRepo.CreateTest(data)
+func (s *TestManager) CreateTest(data *models.Test) error {
+	return s.testRepo.CreateTest(data)
 }
 
-func (tm *TestManager) DeleteTest(id uint) error {
-	return tm.testRepo.DeleteTest(id)
+func (s *TestManager) DeleteTest(id uint) error {
+	return s.testRepo.DeleteTest(id)
 }
 
-func (tm *TestManager) ChangeActiveStatus(status bool, testId uint, userLogin string) error {
-	test, err := tm.testRepo.GetTestById(testId)
+func (s *TestManager) ChangeActiveStatus(status bool, testId uint, userLogin string) error {
+	test, err := s.testRepo.GetTestById(testId)
 	if err != nil {
-		tm.logger.Error("Failed to get test", zap.Error(err))
+		s.logger.Error("Failed to get test", zap.Error(err))
 		return err
 	}
 
-	user, err := tm.userRepo.GetUserByLogin(userLogin)
+	user, err := s.userRepo.GetUserByLogin(userLogin)
 	if err != nil {
-		tm.logger.Error("Failed to get user by login", zap.Error(err))
+		s.logger.Error("Failed to get user by login", zap.Error(err))
 		return err
 	}
 
@@ -83,5 +88,5 @@ func (tm *TestManager) ChangeActiveStatus(status bool, testId uint, userLogin st
 		return errors.New("user is not the author")
 	}
 
-	return tm.testRepo.ChangeActiveStatus(status, testId)
+	return s.testRepo.ChangeActiveStatus(status, testId)
 }

@@ -27,11 +27,17 @@ func NewTestValidator(
 	}
 }
 
-func (tv *TestValidator) Validate(test *models.Test) (*float64, error) {
-	exampleTest, err := tv.testRepo.GetTestById(test.ID)
+func (s *TestValidator) Validate(test *models.Test) (*float64, error) {
+	exampleTest, err := s.testRepo.GetTestById(test.ID)
 	if err != nil {
-		tv.logger.Error("Failed to get test by ID", zap.Error(err))
+		s.logger.Error("Failed to get test by ID", zap.Error(err))
 		return nil, errors.New("failed to fetch test")
+	}
+
+	err = s.testRepo.IncrementCountUserPast(test.ID, int(exampleTest.CountUserPast))
+	if err != nil {
+		s.logger.Error("Failed to increment count user past", zap.Error(err))
+		return nil, errors.New("failed to increment count user past")
 	}
 
 	var (
@@ -59,7 +65,7 @@ func (tv *TestValidator) Validate(test *models.Test) (*float64, error) {
 	}
 
 	if totalAnswers == 0 {
-		tv.logger.Warn("No answers provided")
+		s.logger.Warn("No answers provided")
 		return nil, nil
 	}
 

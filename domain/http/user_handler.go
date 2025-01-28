@@ -7,8 +7,10 @@ import (
 	"github.com/server/configs"
 	"github.com/server/internal/dtos"
 	"github.com/server/internal/repository"
+	"github.com/server/pkg/constants"
 	"github.com/server/pkg/cookie"
 	"github.com/server/pkg/db/postgresql"
+	"github.com/server/pkg/errors"
 	"github.com/server/pkg/json"
 	"github.com/server/pkg/jwt"
 	mapjson "github.com/server/pkg/mapJson"
@@ -44,12 +46,12 @@ func (s *User) GetUserData() http.HandlerFunc {
 		JWT := jwt.NewJwt(s.logger)
 		cookies := cookie.New(w, r, s.logger)
 		jsonHelper := json.New(r, s.logger, w)
-		jsonData := mapjson.New(s.logger, w, r)
 
 		token := cookies.Get("token")
 
 		_, claims, err := JWT.VerifyToken(token)
 		if err != nil {
+			errors.HandleError(s.logger, w, r, err, "Failed to verify token", constants.InternalServerError)
 			return
 		}
 
@@ -57,16 +59,14 @@ func (s *User) GetUserData() http.HandlerFunc {
 
 		user, err := s.repository.GetUserByLogin(userLogin)
 		if err != nil {
-			s.logger.Error("Failed to get user by login", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			errors.HandleError(s.logger, w, r, err, "Failed to get user by login", constants.InternalServerError)
 			return
 		}
 
 		modifiedUser := dtos.ToGetUserByLoginResponse(user)
 
 		if err := jsonHelper.Encode(200, modifiedUser); err != nil {
-			s.logger.Error("Failed to encode user data", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-			jsonData.JsonError("Failed to encode user data: " + err.Error())
+			errors.HandleError(s.logger, w, r, err, "Failed to encode user data", constants.InternalServerError)
 			return
 		}
 	}
@@ -81,15 +81,13 @@ func (s *User) UpdateUser() http.HandlerFunc {
 		jsonResponses := mapjson.New(s.logger, w, r)
 
 		if err := json.DecodeAndValidationBody(&payload); err != nil {
-			jsonResponses.JsonError("Failed to decode data, error:" + err.Error())
-			s.logger.Error("Failed to decode data", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			errors.HandleError(s.logger, w, r, err, "Failed to decode data", constants.InternalServerError)
 			return
 		}
 
 		err := s.repository.UpdateUser(&payload)
 		if err != nil {
-			jsonResponses.JsonError("Failed to update data, error:" + err.Error())
-			s.logger.Error("Failed to update data", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			errors.HandleError(s.logger, w, r, err, "Failed to update data", constants.ErrorUpdateUserData)
 			return
 		}
 
@@ -103,22 +101,20 @@ func (s *User) GetUserByLogin() http.HandlerFunc {
 
 		var payload dtos.GetUserByLoginRequest
 		json := json.New(r, s.logger, w)
-		jsonResponses := mapjson.New(s.logger, w, r)
 
 		if err := json.DecodeAndValidationBody(&payload); err != nil {
-			s.logger.Error("Failed to decode payload body", zap.Error(err))
+			errors.HandleError(s.logger, w, r, err, "Failed to decode payload body", constants.InternalServerError)
 			return
 		}
 
 		user, err := s.repository.GetUserByLogin(payload.Login)
 		if err != nil {
-			s.logger.Error("Failed to get user by login", zap.Error(err))
-			jsonResponses.JsonError("Failed to get user by login, error" + err.Error())
+			errors.HandleError(s.logger, w, r, err, "Failed to get user by login", constants.NotFoundUser)
 			return
 		}
 
 		if err := json.Encode(200, user); err != nil {
-			s.logger.Error("Failed to encode data", zap.Error(err))
+			errors.HandleError(s.logger, w, r, err, "Failed to encode data", constants.InternalServerError)
 			return
 		}
 	}

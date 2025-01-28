@@ -8,7 +8,9 @@ import (
 	"github.com/server/internal/dtos"
 	"github.com/server/internal/repository"
 	"github.com/server/internal/usecases"
+	"github.com/server/pkg/constants"
 	"github.com/server/pkg/db/postgresql"
+	"github.com/server/pkg/errors"
 	"github.com/server/pkg/json"
 	mapjson "github.com/server/pkg/mapJson"
 	"github.com/server/pkg/middleware"
@@ -41,14 +43,15 @@ func (s *ValidateResult) ValidateResult() http.HandlerFunc {
 		var payload dtos.ValidateResultRequestPayload
 		jsonDecodeAndEncode := json.New(r, s.logger, w)
 		jsonResponse := mapjson.New(s.logger, w, r)
+
 		if err := jsonDecodeAndEncode.Decode(&payload); err != nil {
-			s.logger.Error("Failed to decode body", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-			jsonResponse.JsonError("Invalid request payload")
+			errors.HandleError(s.logger, w, r, err, "Failed to decode body", constants.InternalServerError)
 			return
 		}
+
 		result, err := s.service.Validate(payload.Test)
 		if err != nil {
-			s.logger.Error("Validation failed", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			errors.HandleError(s.logger, w, r, err, "Validation failed", constants.InternalServerError)
 			return
 		}
 

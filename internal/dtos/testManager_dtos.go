@@ -2,6 +2,13 @@ package dtos
 
 import "github.com/server/internal/models"
 
+func MapTestModelToGetTestByIdResponse(req *models.Test, userRole string) *GetTestByIdResponse {
+	return &GetTestByIdResponse{
+		Test: *req,
+		Role: userRole,
+	}
+}
+
 func MapCreateTestRequestToModel(req *CreateTestRequest, userId uint) *models.Test {
 	test := &models.Test{
 		Name:      req.Name,
@@ -71,6 +78,7 @@ type GetAllTestsResponse struct {
 
 type GetTestByIdResponse struct {
 	models.Test
+	Role string `json:"user_role"`
 }
 
 type CreateTestRequest struct {

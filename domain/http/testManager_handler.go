@@ -8,10 +8,11 @@ import (
 	"github.com/server/internal/dtos"
 	"github.com/server/internal/repository"
 	"github.com/server/internal/usecases"
+	"github.com/server/pkg/constants"
 	"github.com/server/pkg/db/postgresql"
+	"github.com/server/pkg/errors"
 	"github.com/server/pkg/json"
 	"github.com/server/pkg/jwt"
-	mapjson "github.com/server/pkg/mapJson"
 	"github.com/server/pkg/middleware"
 	"go.uber.org/zap"
 )
@@ -46,28 +47,22 @@ func (s *TestManagerHandler) GetAll() http.HandlerFunc {
 		defer r.Body.Close()
 
 		var payload dtos.GetAllTestsRequest
-
 		decoderAndEncoder := json.New(r, s.logger, w)
-		jsonError := mapjson.New(s.logger, w, r)
 
 		if err := decoderAndEncoder.DecodeAndValidationBody(&payload); err != nil {
-			s.logger.Error("Failed to decode data", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-			jsonError.JsonError(err.Error())
+			errors.HandleError(s.logger, w, r, err, "Failed to decode data", constants.InternalServerError)
 			return
 		}
 
 		getTests, count, err := s.service.GetAllTests(payload.UserId, payload.Limit, payload.Offset)
 		if err != nil {
-			s.logger.Error("Failed to get tests", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-			jsonError.JsonError("Failed to get tests: " + err.Error())
-
+			errors.HandleError(s.logger, w, r, err, "Failed to get tests", constants.ErrorGetAllTests)
 			return
 		}
 		tests := dtos.SetGetAllTests(getTests, count)
 
 		if err := decoderAndEncoder.Encode(http.StatusOK, tests); err != nil {
-			s.logger.Error("Failed to encode data", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-			jsonError.JsonError(err.Error())
+			errors.HandleError(s.logger, w, r, err, "Failed to encode data", constants.InternalServerError)
 			return
 		}
 	}
@@ -78,31 +73,29 @@ func (s *TestManagerHandler) GetTestById() http.HandlerFunc {
 		defer r.Body.Close()
 
 		decoderAndEncoder := json.New(r, s.logger, w)
-		jsonError := mapjson.New(s.logger, w, r)
-
 		id := mux.Vars(r)["id"]
 		parseId, err := strconv.ParseUint(id, 10, 64)
 		if err != nil {
-			s.logger.Error("Failed parse id", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			errors.HandleError(s.logger, w, r, err, "Failed to parse id", constants.InternalServerError)
 			return
 		}
 
 		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
 		if err != nil {
-			s.logger.Error("Failed extract login from user token", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			errors.HandleError(s.logger, w, r, err, "Failed to extract login from user token", constants.InternalServerError)
 			return
 		}
-		getTest, err := s.service.GetTestById(uint(parseId), userLogin)
+
+		getTest, role, err := s.service.GetTestById(uint(parseId), userLogin)
 		if err != nil {
-			s.logger.Error("Failed to get test", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-			jsonError.JsonError("Failed to get test: " + err.Error())
-
+			http.Redirect(w, r, "/not_found", http.StatusFound)
+			errors.HandleError(s.logger, w, r, err, "Failed to get test", constants.GetTestByIdError)
 			return
 		}
 
-		if err := decoderAndEncoder.Encode(http.StatusOK, getTest); err != nil {
-			s.logger.Error("Failed to encode data", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-			jsonError.JsonError(err.Error())
+		res := dtos.MapTestModelToGetTestByIdResponse(getTest, role)
+		if err := decoderAndEncoder.Encode(http.StatusOK, res); err != nil {
+			errors.HandleError(s.logger, w, r, err, "Failed to encode data", constants.InternalServerError)
 			return
 		}
 	}
@@ -114,77 +107,73 @@ func (s *TestManagerHandler) CreateTest() http.HandlerFunc {
 
 		var payload dtos.CreateTestRequest
 		json := json.New(r, s.logger, w)
-		jsonError := mapjson.New(s.logger, w, r)
 
 		if err := json.DecodeAndValidationBody(&payload); err != nil {
-			s.logger.Error("Failed to decode body", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-			jsonError.JsonError("Failed to decode body:" + err.Error())
+			errors.HandleError(s.logger, w, r, err, "Failed to decode body", constants.InternalServerError)
 			return
 		}
 
 		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
 		if err != nil {
-			s.logger.Error("Failed extract login from user token", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			errors.HandleError(s.logger, w, r, err, "Failed to extract login from user token", constants.InternalServerError)
 			return
 		}
+
 		user, err := s.userRepo.GetUserByLogin(userLogin)
 		if err != nil {
-			s.logger.Error("Failed to get user by login", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			errors.HandleError(s.logger, w, r, err, "Failed to get user by login", constants.NotFoundUser)
 			return
 		}
 		testModel := dtos.MapCreateTestRequestToModel(&payload, user.ID)
 
 		err = s.service.CreateTest(testModel)
-
 		if err != nil {
-			jsonError.JsonError("Failed to create test, error:")
-			s.logger.Error("Failed to create test", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			errors.HandleError(s.logger, w, r, err, "Failed to create test", constants.ErrorCreateTest)
 			return
 		}
 
-		jsonError.JsonSuccess("Test created successfully")
 	}
 }
 
 func (s *TestManagerHandler) DeleteTest() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
-		jsonError := mapjson.New(s.logger, w, r)
 		testId := mux.Vars(r)["id"]
+
 		parseId, err := strconv.ParseUint(testId, 10, 64)
 		if err != nil {
-			s.logger.Error("Failed parse id", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			errors.HandleError(s.logger, w, r, err, "Failed parse id", constants.InternalServerError)
 			return
 		}
+
 		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
 		if err != nil {
-			s.logger.Error("Failed extract login from user token", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			errors.HandleError(s.logger, w, r, err, "Failed extract login from user token", constants.InternalServerError)
 			return
 		}
-		test, err := s.service.GetTestById(uint(parseId), userLogin)
-		if err != nil {
-			s.logger.Error("Failed to get test", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
-			jsonError.JsonError("Failed to get test: " + err.Error())
 
+		test, _, err := s.service.GetTestById(uint(parseId), userLogin)
+		if err != nil {
+			errors.HandleError(s.logger, w, r, err, "Failed to get test", constants.GetTestByIdError)
 			return
 		}
 
 		user, err := s.userRepo.GetUserByLogin(userLogin)
 		if err != nil {
-			s.logger.Error("Failed to get user by login", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			errors.HandleError(s.logger, w, r, err, "Failed to get user by login", constants.NotFoundUser)
 			return
 		}
 
 		if test.UserID != user.ID {
-			jsonError.JsonError("user can't delete this test")
+			errors.HandleError(s.logger, w, r, err, "Error delete test", constants.ErrorDeleteTest)
 			return
 		}
 
 		if err := s.service.DeleteTest(uint(parseId)); err != nil {
-			s.logger.Error("Error test delete", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			errors.HandleError(s.logger, w, r, err, "Error test delete", constants.ErrorDeleteTest)
 			return
 		}
-		jsonError.JsonSuccess("Success delete test")
+
 	}
 }
 
@@ -194,24 +183,22 @@ func (s *TestManagerHandler) ChangeActiveTestStatus() http.HandlerFunc {
 		var payload dtos.UpdateTestActiveStatus
 
 		json := json.New(r, s.logger, w)
-		jsonError := mapjson.New(s.logger, w, r)
 
 		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
 		if err != nil {
-			s.logger.Error("Failed to extract data from token", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			errors.HandleError(s.logger, w, r, err, "Failed to extract data from token", constants.InternalServerError)
 			return
 		}
 
 		if err := json.DecodeAndValidationBody(&payload); err != nil {
-			s.logger.Error("Failed to decode body", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			errors.HandleError(s.logger, w, r, err, "Failed to decode body", constants.InternalServerError)
 			return
 		}
 
 		if err := s.service.ChangeActiveStatus(payload.IsActive, payload.TestId, userLogin); err != nil {
-			s.logger.Error("Failed to change test active statuss", zap.Error(err), zap.String("method", r.Method), zap.String("endpoint", r.URL.Path))
+			errors.HandleError(s.logger, w, r, err, "Failed to change test active status", constants.ErrorChangeActiveTest)
 			return
 		}
 
-		jsonError.JsonSuccess("Successed update test status")
 	}
 }

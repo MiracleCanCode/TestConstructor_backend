@@ -11,6 +11,7 @@ type TestManagerInterface interface {
 	CreateTest(data *models.Test) error
 	DeleteTest(id uint) error
 	ChangeActiveStatus(status bool, testId uint) error
+	IncrementCountUserPast(testId uint, count int) error
 }
 
 type TestManager struct {
@@ -65,4 +66,8 @@ func (s *TestManager) ChangeActiveStatus(status bool, testId uint) error {
 	return s.db.Model(&models.Test{}).
 		Where("id = ?", testId).
 		Update("is_active", status).Error
+}
+
+func (s *TestManager) IncrementCountUserPast(testId uint, count int) error {
+	return s.db.Model(&models.Test{}).Where("id = ?", testId).Update("count_user_past", count+1).Error
 }

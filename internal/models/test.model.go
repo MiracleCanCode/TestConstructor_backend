@@ -6,11 +6,12 @@ import (
 
 type Test struct {
 	gorm.Model
-	Name        string     `json:"name"`
-	AuthorLogin string     `json:"author_login"`
-	UserID      uint       `json:"user_id"`
-	IsActive    bool       `json:"is_active" gorm:"default:true"`
-	Questions   []Question `json:"questions" gorm:"foreignKey:TestID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Name          string     `json:"name"`
+	AuthorLogin   string     `json:"author_login"`
+	UserID        uint       `json:"user_id"`
+	IsActive      bool       `json:"is_active" gorm:"default:true"`
+	CountUserPast uint       `json:"count_user_past"`
+	Questions     []Question `json:"questions" gorm:"foreignKey:TestID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }
 
 type Question struct {

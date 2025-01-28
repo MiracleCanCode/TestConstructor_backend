@@ -17,7 +17,6 @@ func IsAuth(next http.Handler) http.HandlerFunc {
 		log := logger.Logger(logger.DefaultLoggerConfig())
 		JWT := jwt.NewJwt(log)
 
-		// Загрузка конфигурации
 		cfg, err := configs.Load(log)
 		if err != nil {
 			log.Error("Failed to load config", zap.Error(err))
@@ -25,7 +24,6 @@ func IsAuth(next http.Handler) http.HandlerFunc {
 			return
 		}
 
-		// Инициализация базы данных
 		db, err := postgresql.New(cfg, log)
 		if err != nil {
 			log.Error("Failed to create DB instance", zap.Error(err))
@@ -36,7 +34,6 @@ func IsAuth(next http.Handler) http.HandlerFunc {
 		userRepo := repository.NewUser(db, log)
 		cookies := cookie.New(w, r, log)
 
-		// Извлечение пользователя из токена
 		login, err := JWT.ExtractUserFromCookie(r, "token")
 		if err != nil {
 			log.Error("Failed to extract user from token", zap.Error(err))
@@ -44,7 +41,6 @@ func IsAuth(next http.Handler) http.HandlerFunc {
 			return
 		}
 
-		// Поиск пользователя по логину
 		findUserByLogin, err := userRepo.GetUserByLogin(login)
 		if err != nil {
 			log.Error("Failed to find user by login", zap.Error(err))
@@ -52,14 +48,12 @@ func IsAuth(next http.Handler) http.HandlerFunc {
 			return
 		}
 
-		// Проверка на наличие refresh token
 		if findUserByLogin.RefreshToken == "" {
 			log.Warn("User does not have a refresh token", zap.String("login", login))
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		// Обновление access token
 		accessToken, err := JWT.RefreshAccessToken(findUserByLogin.RefreshToken)
 		if err != nil {
 			log.Error("Failed to refresh access token", zap.Error(err))
@@ -67,10 +61,8 @@ func IsAuth(next http.Handler) http.HandlerFunc {
 			return
 		}
 
-		// Установка нового токена в cookie
 		cookies.Set("token", accessToken)
 
-		// Продолжение обработки запроса
 		next.ServeHTTP(w, r)
 	}
 }
