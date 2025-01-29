@@ -1,16 +1,21 @@
 FROM golang:1.23.5-alpine3.20 AS builder
 WORKDIR /app
 
-COPY go.mod go.sum ../
+# Установка git и bash
+RUN apk update && apk add --no-cache git bash
+
+COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-
+ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 RUN go build -o /bin/myapp ./cmd
 
+# Создаем второй этап с alpine
 FROM alpine:3.20
 WORKDIR /app
 
+# Установка bash и curl
 RUN apk add --no-cache bash curl
 
 COPY wait-for-it.sh /wait-for-it.sh

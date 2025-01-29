@@ -26,7 +26,6 @@ func NewTestManager(db *postgresql.Db) *TestManager {
 
 func (s *TestManager) GetAllTests(user_id uint, lastID, limit int) ([]models.Test, int64, error) {
 	var tests []models.Test
-
 	query := s.db.Table("tests").Where("deleted_at IS NULL AND user_id = ?", user_id)
 	if lastID > 0 {
 		query = query.Where("id > ?", lastID)

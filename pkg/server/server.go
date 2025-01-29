@@ -34,6 +34,7 @@ func New(db *postgresql.Db, logger *zap.Logger, cfg *configs.Config) *api {
 func (s *api) RunApp() error {
 	s.FillEndpoints()
 	handler := middleware.DefaultCORSMiddleware()(s.router)
+	s.log.Info("Server started")
 	return http.ListenAndServe(s.addr, handler)
 }
 

@@ -56,7 +56,6 @@ func New(conf *configs.Config, log *zap.Logger) (*Db, error) {
 	sqlDb.SetMaxOpenConns(50)
 	sqlDb.SetConnMaxLifetime(30 * time.Minute)
 
-	log.Info("DB connected!")
 	return &Db{
 		db,
 	}, nil

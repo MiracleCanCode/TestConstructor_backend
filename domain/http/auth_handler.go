@@ -37,6 +37,7 @@ func NewAuthHandler(router *mux.Router, logger *zap.Logger, db *postgresql.Db, c
 
 	router.HandleFunc("/api/auth/login", handler.Login).Methods(http.MethodPost)
 	router.HandleFunc("/api/auth/registration", handler.Registration).Methods(http.MethodPost)
+	router.HandleFunc("/api/auth/logout", handler.Logout).Methods(http.MethodGet)
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -97,4 +98,10 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
+	errorHandler := errors.New(h.logger, w, r)
+
+	if err := h.authUsecase.Logout(w, r); err != nil {
+		errorHandler.HandleError(constants.ErrLogout, 400, err)
+		return
+	}
 }

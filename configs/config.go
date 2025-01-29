@@ -13,6 +13,7 @@ type Config struct {
 	PORT       string
 	SECRET     string
 	CLIENT_URL string
+	REDIS_HOST string
 }
 
 const PRODACTION bool = false
@@ -59,10 +60,17 @@ func Load(log *zap.Logger) (*Config, error) {
 		secret = "SUPERSECRETKEYFORBESTAPPINTHEWORLD"
 	}
 
+	redis, ok := os.LookupEnv("REDIS_HOST")
+	if !ok {
+		log.Error("REDIS_HOST env variable not set")
+		return nil, fmt.Errorf("REDIS_HOST env variable not set")
+	}
+
 	return &Config{
 		DB:         db,
 		PORT:       port,
 		SECRET:     secret,
 		CLIENT_URL: clientUrl,
+		REDIS_HOST: redis,
 	}, nil
 }
