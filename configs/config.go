@@ -9,11 +9,12 @@ import (
 )
 
 type Config struct {
-	DB         string
-	PORT       string
-	SECRET     string
-	CLIENT_URL string
-	REDIS_HOST string
+	DB           string
+	PORT         string
+	SECRET       string
+	CLIENT_URL   string
+	REDIS_HOST   string
+	RABBITMQ_URL string
 }
 
 const PRODACTION bool = true
@@ -42,6 +43,12 @@ func Load(log *zap.Logger) (*Config, error) {
 		return nil, fmt.Errorf("DB env variable not set")
 	}
 
+	rabbit, ok := os.LookupEnv("RABBITMQ_URL")
+	if !ok {
+		log.Error("RABBITMQ_URL env variable not set")
+		return nil, fmt.Errorf("RABBITMQ_URL env variable not set")
+	}
+
 	clientUrl, ok := os.LookupEnv("CLIENT_URL")
 	if !ok {
 		log.Error("CLIENT_URL env variable not set")
@@ -67,10 +74,11 @@ func Load(log *zap.Logger) (*Config, error) {
 	}
 
 	return &Config{
-		DB:         db,
-		PORT:       port,
-		SECRET:     secret,
-		CLIENT_URL: clientUrl,
-		REDIS_HOST: redis,
+		DB:           db,
+		PORT:         port,
+		SECRET:       secret,
+		CLIENT_URL:   clientUrl,
+		REDIS_HOST:   redis,
+		RABBITMQ_URL: rabbit,
 	}, nil
 }

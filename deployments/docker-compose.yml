@@ -10,6 +10,7 @@ services:
     depends_on:
       - postgres
       - redis
+      - rabbitmq
     networks:
       - mynetwork
     env_file:
@@ -74,19 +75,18 @@ services:
     networks:
       - mynetwork
 
-  # rabbitmq:
-  #   image: rabbitmq:3.12-management
-  #   container_name: rabbitmq-service
-  #   ports:
-  #     - "5672:5672"
-  #     - "15672:15672"
-  #   environment:
-  #     RABBITMQ_DEFAULT_USER: admin
-  #     RABBITMQ_DEFAULT_PASS: password
-  #   volumes:
-  #     - rabbitmq_data:/var/lib/rabbitmq
-  #   networks:
-  #     - mynetwork
+  rabbitmq:
+    container_name: rabbitmq-service
+    image: rabbitmq:4.1-rc-management-alpine
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    networks:
+      - mynetwork
 
 networks:
   mynetwork:
