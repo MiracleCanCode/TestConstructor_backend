@@ -4,10 +4,18 @@ import (
 	"context"
 	"time"
 
-	"github.com/MiracleCanCode/example_configuration_logger/pkg/logger"
+	"github.com/MiracleCanCode/example_configuration_logger"
 	"github.com/redis/go-redis/v9"
 	"github.com/server/configs"
 )
+
+type RedisInterface interface {
+	Get(key string) (string, error)
+	Set(key string, value interface{}, ttl time.Duration) error
+	Del(key string) error
+	Close() error
+	Keys(key string) *redis.StringSliceCmd
+}
 
 type Redis struct {
 	client *redis.Client
@@ -24,7 +32,6 @@ func New() *Redis {
 		Password: "",
 		DB:       0,
 	})
-
 	return &Redis{
 		client: rdb,
 	}
@@ -47,4 +54,9 @@ func (r *Redis) Del(key string) error {
 
 func (r *Redis) Close() error {
 	return r.client.Close()
+}
+
+func (r *Redis) Keys(key string) *redis.StringSliceCmd {
+	ctx := context.Background()
+	return r.client.Keys(ctx, key)
 }

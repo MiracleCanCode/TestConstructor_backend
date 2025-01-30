@@ -16,7 +16,7 @@ type Config struct {
 	REDIS_HOST string
 }
 
-const PRODACTION bool = false
+const PRODACTION bool = true
 
 func Load(log *zap.Logger) (*Config, error) {
 	var envFile string

@@ -10,7 +10,7 @@ import (
 	"github.com/server/internal/usecases"
 	"github.com/server/pkg/constants"
 	"github.com/server/pkg/db/postgresql"
-	"github.com/server/pkg/errors"
+	errorshandler "github.com/server/pkg/errorsHandler"
 	"github.com/server/pkg/json"
 	"github.com/server/pkg/jwt"
 	"github.com/server/pkg/middleware"
@@ -49,7 +49,7 @@ func (s *TestManagerHandler) GetAll() http.HandlerFunc {
 				s.logger.Warn("Failed to close request body", zap.Error(err))
 			}
 		}()
-		errors := errors.New(s.logger, w, r)
+		errors := errorshandler.New(s.logger, w, r)
 		var payload dtos.GetAllTestsRequest
 		decoderAndEncoder := json.New(r, s.logger, w)
 
@@ -69,6 +69,7 @@ func (s *TestManagerHandler) GetAll() http.HandlerFunc {
 			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
+		w.WriteHeader(http.StatusAccepted)
 	}
 }
 
@@ -79,7 +80,7 @@ func (s *TestManagerHandler) GetTestById() http.HandlerFunc {
 				s.logger.Warn("Failed to close request body", zap.Error(err))
 			}
 		}()
-		errors := errors.New(s.logger, w, r)
+		errors := errorshandler.New(s.logger, w, r)
 		decoderAndEncoder := json.New(r, s.logger, w)
 		id := mux.Vars(r)["id"]
 		parseId, err := strconv.ParseUint(id, 10, 64)
@@ -105,6 +106,7 @@ func (s *TestManagerHandler) GetTestById() http.HandlerFunc {
 			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
+		w.WriteHeader(http.StatusAccepted)
 	}
 }
 
@@ -116,7 +118,7 @@ func (s *TestManagerHandler) CreateTest() http.HandlerFunc {
 			}
 		}()
 
-		errors := errors.New(s.logger, w, r)
+		errors := errorshandler.New(s.logger, w, r)
 		var payload dtos.CreateTestRequest
 		json := json.New(r, s.logger, w)
 
@@ -143,7 +145,7 @@ func (s *TestManagerHandler) CreateTest() http.HandlerFunc {
 			errors.HandleError(constants.ErrorCreateTest, http.StatusBadRequest, err)
 			return
 		}
-
+		w.WriteHeader(http.StatusAccepted)
 	}
 }
 
@@ -155,7 +157,7 @@ func (s *TestManagerHandler) DeleteTest() http.HandlerFunc {
 			}
 		}()
 
-		errors := errors.New(s.logger, w, r)
+		errors := errorshandler.New(s.logger, w, r)
 		testId := mux.Vars(r)["id"]
 		parseId, err := strconv.ParseUint(testId, 10, 64)
 		if err != nil {
@@ -173,7 +175,7 @@ func (s *TestManagerHandler) DeleteTest() http.HandlerFunc {
 			errors.HandleError(constants.ErrorDeleteTest, http.StatusInternalServerError, err)
 			return
 		}
-
+		w.WriteHeader(http.StatusAccepted)
 	}
 }
 
@@ -185,7 +187,7 @@ func (s *TestManagerHandler) ChangeActiveTestStatus() http.HandlerFunc {
 			}
 		}()
 
-		errors := errors.New(s.logger, w, r)
+		errors := errorshandler.New(s.logger, w, r)
 		var payload dtos.UpdateTestActiveStatus
 		json := json.New(r, s.logger, w)
 
@@ -204,6 +206,6 @@ func (s *TestManagerHandler) ChangeActiveTestStatus() http.HandlerFunc {
 			errors.HandleError(constants.ErrorChangeActiveTest, http.StatusInternalServerError, err)
 			return
 		}
-
+		w.WriteHeader(http.StatusAccepted)
 	}
 }

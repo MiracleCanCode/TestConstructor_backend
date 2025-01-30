@@ -10,7 +10,7 @@ import (
 	"github.com/server/internal/usecases"
 	"github.com/server/pkg/constants"
 	"github.com/server/pkg/db/postgresql"
-	"github.com/server/pkg/errors"
+	errorshandler "github.com/server/pkg/errorsHandler"
 	"github.com/server/pkg/json"
 	"github.com/server/pkg/jwt"
 
@@ -46,7 +46,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 			h.logger.Warn("Failed to close request body", zap.Error(err))
 		}
 	}()
-	errorHandler := errors.New(h.logger, w, r)
+	errorHandler := errorshandler.New(h.logger, w, r)
 	var payload dtos.LoginRequest
 	jsonUtil := json.New(r, h.logger, w)
 	if err := jsonUtil.DecodeAndValidationBody(&payload); err != nil {
@@ -62,6 +62,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err := jsonUtil.Encode(http.StatusOK, token); err != nil {
 		errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 	}
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (h *AuthHandler) Registration(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +72,7 @@ func (h *AuthHandler) Registration(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	errorHandler := errors.New(h.logger, w, r)
+	errorHandler := errorshandler.New(h.logger, w, r)
 
 	var payload dtos.RegistrationRequest
 	jsonUtil := json.New(r, h.logger, w)
@@ -89,6 +90,7 @@ func (h *AuthHandler) Registration(w http.ResponseWriter, r *http.Request) {
 		errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 		return
 	}
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
@@ -98,10 +100,12 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	errorHandler := errors.New(h.logger, w, r)
+	errorHandler := errorshandler.New(h.logger, w, r)
 
 	if err := h.authUsecase.Logout(w, r); err != nil {
 		errorHandler.HandleError(constants.ErrLogout, 400, err)
 		return
 	}
+
+	w.WriteHeader(http.StatusAccepted)
 }

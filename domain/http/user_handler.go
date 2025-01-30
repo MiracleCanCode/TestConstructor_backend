@@ -10,10 +10,9 @@ import (
 	"github.com/server/internal/usecases"
 	"github.com/server/pkg/constants"
 	"github.com/server/pkg/db/postgresql"
-	"github.com/server/pkg/errors"
+	errorshandler "github.com/server/pkg/errorsHandler"
 	"github.com/server/pkg/json"
 	"github.com/server/pkg/jwt"
-	mapjson "github.com/server/pkg/mapJson"
 	"github.com/server/pkg/middleware"
 	"go.uber.org/zap"
 )
@@ -44,7 +43,7 @@ func (s *User) GetUserData() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		errorHandler := errors.New(s.logger, w, r)
+		errorHandler := errorshandler.New(s.logger, w, r)
 		JWT := jwt.NewJwt(s.logger)
 		jsonHelper := json.New(r, s.logger, w)
 		userUsecase := usecases.NewUser(s.repository, s.logger)
@@ -67,6 +66,7 @@ func (s *User) GetUserData() http.HandlerFunc {
 			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
+		w.WriteHeader(http.StatusAccepted)
 	}
 }
 
@@ -75,9 +75,8 @@ func (s *User) UpdateUser() http.HandlerFunc {
 		defer r.Body.Close()
 
 		var payload dtos.UpdateUserRequest
-		errorHandler := errors.New(s.logger, w, r)
+		errorHandler := errorshandler.New(s.logger, w, r)
 		json := json.New(r, s.logger, w)
-		jsonResponses := mapjson.New(s.logger, w, r)
 
 		if err := json.DecodeAndValidationBody(&payload); err != nil {
 			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
@@ -90,7 +89,7 @@ func (s *User) UpdateUser() http.HandlerFunc {
 			return
 		}
 
-		jsonResponses.JsonSuccess("Success update data!")
+		w.WriteHeader(http.StatusAccepted)
 	}
 }
 
@@ -99,7 +98,7 @@ func (s *User) GetUserByLogin() http.HandlerFunc {
 		defer r.Body.Close()
 
 		var payload dtos.GetUserByLoginRequest
-		errorHandler := errors.New(s.logger, w, r)
+		errorHandler := errorshandler.New(s.logger, w, r)
 		json := json.New(r, s.logger, w)
 		userUsecase := usecases.NewUser(s.repository, s.logger)
 
@@ -119,5 +118,6 @@ func (s *User) GetUserByLogin() http.HandlerFunc {
 			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
+		w.WriteHeader(http.StatusAccepted)
 	}
 }

@@ -34,6 +34,7 @@ func (s *User) FindUserByLogin(login string) (*models.User, error) {
 
 	cachedData, err := rdb.Get(cacheKey)
 	if err == nil {
+		s.logger.Info("Cache")
 		var result struct {
 			User *models.User `json:"user"`
 		}

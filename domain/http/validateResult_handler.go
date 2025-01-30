@@ -10,7 +10,7 @@ import (
 	"github.com/server/internal/usecases"
 	"github.com/server/pkg/constants"
 	"github.com/server/pkg/db/postgresql"
-	"github.com/server/pkg/errors"
+	errorshandler "github.com/server/pkg/errorsHandler"
 	"github.com/server/pkg/json"
 	mapjson "github.com/server/pkg/mapJson"
 	"github.com/server/pkg/middleware"
@@ -41,7 +41,7 @@ func (s *ValidateResult) ValidateResult() http.HandlerFunc {
 		defer r.Body.Close()
 
 		var payload dtos.ValidateResultRequestPayload
-		errorHandler := errors.New(s.logger, w, r)
+		errorHandler := errorshandler.New(s.logger, w, r)
 		jsonDecodeAndEncode := json.New(r, s.logger, w)
 		jsonResponse := mapjson.New(s.logger, w, r)
 

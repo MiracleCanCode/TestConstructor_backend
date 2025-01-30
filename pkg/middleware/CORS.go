@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/MiracleCanCode/example_configuration_logger/pkg/logger"
+	"github.com/MiracleCanCode/example_configuration_logger"
 	"github.com/rs/cors"
 	"github.com/server/configs"
 )

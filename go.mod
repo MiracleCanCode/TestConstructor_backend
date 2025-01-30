@@ -7,8 +7,7 @@ require github.com/rs/cors v1.11.1
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
-	github.com/MiracleCanCode/example_configuration_logger v0.0.0-20241227155048-eab3c30eeaff // indirect
-	github.com/MiracleCanCode/zaperr v0.0.0-20241228123236-5498aa3f5d1b // indirect
+	github.com/MiracleCanCode/example_configuration_logger v0.0.0-20241229044104-619cf4744562 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -46,6 +45,7 @@ require (
 	github.com/redis/go-redis/v9 v9.7.0 // indirect
 	github.com/russross/blackfriday/v2 v2.0.1 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
+	github.com/streadway/amqp v1.1.0
 	github.com/swaggo/files v0.0.0-20220610200504-28940afbdbfe // indirect
 	github.com/swaggo/http-swagger v1.3.4 // indirect
 	github.com/swaggo/swag v1.16.4 // indirect

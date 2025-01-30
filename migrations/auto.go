@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/MiracleCanCode/example_configuration_logger/pkg/logger"
+	"github.com/MiracleCanCode/example_configuration_logger"
 	"github.com/server/configs"
 	"github.com/server/internal/models"
 	"github.com/server/pkg/db/postgresql"
