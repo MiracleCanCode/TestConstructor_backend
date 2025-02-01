@@ -38,7 +38,7 @@
     </tr>
 </table>
 
-## Instalation guide
+## Installation guide
 
 ### Clone this repo
 
