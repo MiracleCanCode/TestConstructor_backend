@@ -1,4 +1,4 @@
 .env.local
 postgres-data
-.env.prodaction
+.env.production
 myapp

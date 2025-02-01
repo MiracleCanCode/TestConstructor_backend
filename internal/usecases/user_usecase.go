@@ -1,49 +1,39 @@
 package usecases
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/server/internal/models"
 	"github.com/server/internal/repository"
-	"github.com/server/pkg/db/redis"
+	cachemanager "github.com/server/pkg/cacheManager"
 	"go.uber.org/zap"
 )
 
 type UserInterface interface {
-	FindUserData(login string) (*models.User, error)
 	FindUserByLogin(login string) (*models.User, error)
 }
 
 type User struct {
-	userRepo repository.UserInterface
-	logger   *zap.Logger
+	userRepo     repository.UserInterface
+	logger       *zap.Logger
+	cacheManager cachemanager.CacheManagerInterface
 }
 
-func NewUser(userRepo repository.UserInterface, logger *zap.Logger) *User {
+func NewUser(userRepo repository.UserInterface, logger *zap.Logger, cacheManager cachemanager.CacheManagerInterface) *User {
 	return &User{
-		userRepo: userRepo,
-		logger:   logger,
+		userRepo:     userRepo,
+		logger:       logger,
+		cacheManager: cacheManager,
 	}
 }
 
 func (s *User) FindUserByLogin(login string) (*models.User, error) {
-	rdb := redis.New()
 	cacheKey := fmt.Sprintf("user:login:%s", login)
+	var result models.User
 
-	cachedData, err := rdb.Get(cacheKey)
-	if err == nil {
-		s.logger.Info("Cache")
-		var result struct {
-			User *models.User `json:"user"`
-		}
-
-		if err := json.Unmarshal([]byte(cachedData), &result); err == nil {
-			return result.User, nil
-		}
-
-		s.logger.Error("Failed to unmarshal cache", zap.Error(err))
+	if err := s.cacheManager.Get(cacheKey, &result); err == nil {
+		return &result, nil
 	}
 
 	user, err := s.userRepo.GetUserByLogin(login)
@@ -51,14 +41,7 @@ func (s *User) FindUserByLogin(login string) (*models.User, error) {
 		return nil, err
 	}
 
-	cacheValue, err := json.Marshal(map[string]interface{}{
-		"user": user,
-	})
-	if err == nil {
-		_ = rdb.Set(cacheKey, cacheValue, 10*time.Minute)
-	} else {
-		s.logger.Warn("Failed to marshal cache data", zap.Error(err))
-	}
+	s.cacheManager.Set(cacheKey, user, 10*time.Minute)
 
 	return user, nil
 }

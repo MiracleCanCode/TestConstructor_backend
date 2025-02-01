@@ -75,16 +75,19 @@ func (s *TestManager) GetTestById(id uint, userLogin string) (*models.Test, stri
 	cacheKey := fmt.Sprintf("test:%d", id)
 	var cachedTest models.Test
 
-	if err := s.cacheManager.Get(cacheKey, &cachedTest); err == nil {
-		return &cachedTest, constants.PassingRole, nil
-	}
-
-	test, err := s.testRepo.GetTestById(id)
+	user, err := s.userRepo.GetUserByLogin(userLogin)
 	if err != nil {
 		return nil, "", err
 	}
 
-	user, err := s.userRepo.GetUserByLogin(userLogin)
+	if err := s.cacheManager.Get(cacheKey, &cachedTest); err == nil {
+		if cachedTest.UserID == user.ID {
+			return &cachedTest, constants.OwnerRole, nil
+		}
+		return &cachedTest, constants.PassingRole, nil
+	}
+
+	test, err := s.testRepo.GetTestById(id)
 	if err != nil {
 		return nil, "", err
 	}
@@ -109,7 +112,7 @@ func (s *TestManager) CreateTest(data *models.Test) error {
 		return err
 	}
 
-	if err := s.cacheManager.Delete(fmt.Sprintf("tests:user:%d:*", data.UserID)); err != nil {
+	if err := s.deleteTestsFromCache(data.UserID); err != nil {
 		s.logger.Warn("Failed to invalidate cache", zap.Error(err))
 	}
 
@@ -122,7 +125,7 @@ func (s *TestManager) DeleteTest(id uint, login string) error {
 		return errors.New(constants.ErrorDeleteTest)
 	}
 
-	if err := s.cacheManager.Delete(fmt.Sprintf("tests:user:%d:*", user.ID)); err != nil {
+	if err := s.deleteTestsFromCache(user.ID); err != nil {
 		s.logger.Warn("Failed to invalidate cache", zap.Error(err))
 	}
 
@@ -153,9 +156,29 @@ func (s *TestManager) ChangeActiveStatus(status bool, testId uint, userLogin str
 		return errors.New("user is not the author")
 	}
 
-	if err := s.cacheManager.Delete(fmt.Sprintf("test:%d", testId)); err != nil {
+	if err := s.deleteTestFromCache(testId); err != nil {
+		s.logger.Warn("Failed to invalidate cache", zap.Error(err))
+	}
+
+	if err := s.deleteTestsFromCache(user.ID); err != nil {
 		s.logger.Warn("Failed to invalidate cache", zap.Error(err))
 	}
 
 	return s.testRepo.ChangeActiveStatus(status, testId)
+}
+
+func (s *TestManager) deleteTestFromCache(testId uint) error {
+	if err := s.cacheManager.Delete(fmt.Sprintf("test:%d", testId)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *TestManager) deleteTestsFromCache(userId uint) error {
+	if err := s.cacheManager.Delete(fmt.Sprintf("tests:user:%d:*", userId)); err != nil {
+		return err
+	}
+
+	return nil
 }

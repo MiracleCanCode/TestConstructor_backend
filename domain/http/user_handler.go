@@ -8,8 +8,10 @@ import (
 	"github.com/server/internal/dtos"
 	"github.com/server/internal/repository"
 	"github.com/server/internal/usecases"
+	cachemanager "github.com/server/pkg/cacheManager"
 	"github.com/server/pkg/constants"
 	"github.com/server/pkg/db/postgresql"
+	"github.com/server/pkg/db/redis"
 	errorshandler "github.com/server/pkg/errorsHandler"
 	"github.com/server/pkg/json"
 	"github.com/server/pkg/jwt"
@@ -46,7 +48,9 @@ func (s *User) GetUserData() http.HandlerFunc {
 		errorHandler := errorshandler.New(s.logger, w, r)
 		JWT := jwt.NewJwt(s.logger)
 		jsonHelper := json.New(r, s.logger, w)
-		userUsecase := usecases.NewUser(s.repository, s.logger)
+		rdb := redis.New()
+		cache := cachemanager.New(rdb, s.logger)
+		userUsecase := usecases.NewUser(s.repository, s.logger, cache)
 
 		login, err := JWT.ExtractUserFromCookie(r, "token")
 		if err != nil {
@@ -100,7 +104,9 @@ func (s *User) GetUserByLogin() http.HandlerFunc {
 		var payload dtos.GetUserByLoginRequest
 		errorHandler := errorshandler.New(s.logger, w, r)
 		json := json.New(r, s.logger, w)
-		userUsecase := usecases.NewUser(s.repository, s.logger)
+		rdb := redis.New()
+		cache := cachemanager.New(rdb, s.logger)
+		userUsecase := usecases.NewUser(s.repository, s.logger, cache)
 
 		if err := json.DecodeAndValidationBody(&payload); err != nil {
 			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)

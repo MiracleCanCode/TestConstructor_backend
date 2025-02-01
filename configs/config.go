@@ -23,7 +23,7 @@ func Load(log *zap.Logger) (*Config, error) {
 	var envFile string
 
 	if PRODACTION {
-		envFile = ".env.prodaction"
+		envFile = ".env.production"
 	} else {
 		envFile = ".env.local"
 	}

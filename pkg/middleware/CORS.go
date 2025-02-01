@@ -22,7 +22,7 @@ func DefaultCORSMiddleware() func(http.Handler) http.Handler {
 		log.Error("Failed to load config")
 	}
 	options := cors.Options{
-		AllowedOrigins:   []string{cfg.CLIENT_URL},
+		AllowedOrigins:   []string{cfg.CLIENT_URL, "http://localhost:4200"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type", "X-Requested-With"},
 		AllowCredentials: true,

@@ -1,11 +1,8 @@
-
 BINARY_NAME=myapp
-
 
 SRC_DIR=./cmd
 MIGRATE_DIR=./migrations
 DOCKER_COMPOSE_DIR=./deployments/docker-compose.yml
-
 
 GO=go
 GOFMT=gofmt
@@ -20,10 +17,10 @@ migrate:
 lint:
 	$(GOLINT) run ./...
 
-docker-compose:
+docker-build:
 	$(DOCKERCOMPOSE) -f $(DOCKER_COMPOSE_DIR) up --build
    
-docker-compose-run:
+docker-run:
 	$(DOCKERCOMPOSE) -f $(DOCKER_COMPOSE_DIR) up
 
 build:

@@ -31,7 +31,7 @@ func (s *CacheManager) Get(key string, out interface{}) error {
 	if err != nil {
 		return err
 	}
-
+	s.logger.Info("Cache get")
 	if err := json.Unmarshal([]byte(data), out); err != nil {
 		s.logger.Warn("Failed to unmarshal cache data, deleting key", zap.String("key", key), zap.Error(err))
 		if delErr := s.rdb.Del(key); delErr != nil {
@@ -44,6 +44,7 @@ func (s *CacheManager) Get(key string, out interface{}) error {
 
 func (s *CacheManager) Set(key string, value interface{}, ttl time.Duration) {
 	data, err := json.Marshal(value)
+	s.logger.Info("Cache set")
 	if err != nil {
 		s.logger.Warn("Failed to marshal data for cache", zap.String("key", key), zap.Error(err))
 		return
