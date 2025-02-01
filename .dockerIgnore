@@ -3,3 +3,5 @@
 .env.local
 .git
 Makefile
+.editorconfig
+README.md
