@@ -6,7 +6,6 @@ import (
 	"github.com/MiracleCanCode/example_configuration_logger"
 	"github.com/server/configs"
 	"github.com/server/internal/repository"
-	"github.com/server/pkg/cookie"
 	"github.com/server/pkg/db/postgresql"
 	"github.com/server/pkg/jwt"
 	"go.uber.org/zap"
@@ -30,11 +29,11 @@ func IsAuth(next http.Handler) http.HandlerFunc {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+		defer db.Close()
 
 		userRepo := repository.NewUser(db, log)
-		cookies := cookie.New(w, r, log)
 
-		login, err := JWT.ExtractUserFromCookie(r, "token")
+		login, err := JWT.ExtractUserFromToken(r)
 		if err != nil {
 			log.Error("Failed to extract user from token", zap.Error(err))
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -61,7 +60,7 @@ func IsAuth(next http.Handler) http.HandlerFunc {
 			return
 		}
 
-		cookies.Set("token", accessToken)
+		r.Header.Set("Authorization", "Bearer "+accessToken)
 
 		next.ServeHTTP(w, r)
 	}

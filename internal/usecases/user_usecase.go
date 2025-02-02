@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/server/internal/dtos"
 	"github.com/server/internal/models"
 	"github.com/server/internal/repository"
 	cachemanager "github.com/server/pkg/cacheManager"
@@ -12,6 +13,7 @@ import (
 
 type UserInterface interface {
 	FindUserByLogin(login string) (*models.User, error)
+	UpdateUserData(user dtos.UpdateUserRequest) error
 }
 
 type User struct {
@@ -44,4 +46,14 @@ func (s *User) FindUserByLogin(login string) (*models.User, error) {
 	s.cacheManager.Set(cacheKey, user, 10*time.Minute)
 
 	return user, nil
+}
+
+func (s *User) UpdateUserData(user dtos.UpdateUserRequest) error {
+	cacheKey := fmt.Sprintf("user:login:%s", user.UserLogin)
+
+	if err := s.cacheManager.Delete(cacheKey); err != nil {
+		return err
+	}
+
+	return s.userRepo.UpdateUser(&user)
 }

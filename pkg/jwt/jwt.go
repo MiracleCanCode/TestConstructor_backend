@@ -3,6 +3,7 @@ package jwt
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -15,7 +16,7 @@ type JWTInterface interface {
 	CreateAccessToken(login string) (string, error)
 	CreateRefreshToken(login string) (string, error)
 	VerifyToken(tokenString string) (*jwt.Token, jwt.MapClaims, error)
-	ExtractUserFromCookie(r *http.Request, cookieName string) (string, error)
+	ExtractUserFromToken(r *http.Request) (string, error)
 	RefreshAccessToken(refreshToken string) (string, error)
 }
 
@@ -71,16 +72,18 @@ func (s *JWT) VerifyToken(tokenString string) (*jwt.Token, jwt.MapClaims, error)
 	return token, claims, nil
 }
 
-func (s *JWT) ExtractUserFromCookie(r *http.Request, cookieName string) (string, error) {
-	cookie, err := r.Cookie(cookieName)
-	if err != nil {
-		if errors.Is(err, http.ErrNoCookie) {
-			return "", errors.New("auth cookie not found")
-		}
-		return "", errors.New("failed to retrieve auth cookie")
+func (s *JWT) ExtractUserFromToken(r *http.Request) (string, error) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		return "", errors.New("token is exists")
 	}
-	tokenString := cookie.Value
-	_, claims, err := s.VerifyToken(tokenString)
+
+	authToken := strings.TrimPrefix(authHeader, "Bearer ")
+	if authToken == "" {
+		return "", errors.New("")
+	}
+
+	_, claims, err := s.VerifyToken(authToken)
 	if err != nil {
 		return "", err
 	}

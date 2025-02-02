@@ -89,7 +89,7 @@ func (s *TestManagerHandler) GetTestById() http.HandlerFunc {
 			return
 		}
 
-		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
+		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromToken(r)
 		if err != nil {
 			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
@@ -127,7 +127,7 @@ func (s *TestManagerHandler) CreateTest() http.HandlerFunc {
 			return
 		}
 
-		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
+		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromToken(r)
 		if err != nil {
 			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
@@ -165,7 +165,7 @@ func (s *TestManagerHandler) DeleteTest() http.HandlerFunc {
 			return
 		}
 
-		login, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
+		login, err := jwt.NewJwt(s.logger).ExtractUserFromToken(r)
 		if err != nil {
 			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
@@ -191,7 +191,7 @@ func (s *TestManagerHandler) ChangeActiveTestStatus() http.HandlerFunc {
 		var payload dtos.UpdateTestActiveStatus
 		json := json.New(r, s.logger, w)
 
-		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromCookie(r, "token")
+		userLogin, err := jwt.NewJwt(s.logger).ExtractUserFromToken(r)
 		if err != nil {
 			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return

@@ -10,6 +10,11 @@ import (
 
 func main() {
 	log := logger.Logger(logger.DefaultLoggerConfig())
+	defer func() {
+		if err := log.Sync(); err != nil {
+			log.Error("Failed to sync logger", zap.Error(err))
+		}
+	}()
 	conf, err := configs.Load(log)
 	if err != nil {
 		log.Error("Failed to load config", zap.Error(err))
@@ -20,6 +25,7 @@ func main() {
 		log.Error("Failed to initialize db", zap.Error(err))
 		return
 	}
+	defer db.Close()
 	app := server.New(db, log, conf)
 
 	if err := app.RunApp(); err != nil {

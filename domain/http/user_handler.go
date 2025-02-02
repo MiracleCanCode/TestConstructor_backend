@@ -52,7 +52,7 @@ func (s *User) GetUserData() http.HandlerFunc {
 		cache := cachemanager.New(rdb, s.logger)
 		userUsecase := usecases.NewUser(s.repository, s.logger, cache)
 
-		login, err := JWT.ExtractUserFromCookie(r, "token")
+		login, err := JWT.ExtractUserFromToken(r)
 		if err != nil {
 			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
@@ -81,13 +81,16 @@ func (s *User) UpdateUser() http.HandlerFunc {
 		var payload dtos.UpdateUserRequest
 		errorHandler := errorshandler.New(s.logger, w, r)
 		json := json.New(r, s.logger, w)
+		rdb := redis.New()
+		cache := cachemanager.New(rdb, s.logger)
+		userUsecase := usecases.NewUser(s.repository, s.logger, cache)
 
 		if err := json.DecodeAndValidationBody(&payload); err != nil {
 			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
 
-		err := s.repository.UpdateUser(&payload)
+		err := userUsecase.UpdateUserData(payload)
 		if err != nil {
 			errorHandler.HandleError(constants.ErrorUpdateUserData, http.StatusInternalServerError, err)
 			return

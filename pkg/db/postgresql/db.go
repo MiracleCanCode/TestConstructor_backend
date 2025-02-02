@@ -53,7 +53,7 @@ func New(conf *configs.Config, log *zap.Logger) (*Db, error) {
 		db.Debug()
 	}
 	sqlDb.SetConnMaxIdleTime(30 * time.Minute)
-	sqlDb.SetMaxOpenConns(50)
+	sqlDb.SetMaxOpenConns(150)
 	sqlDb.SetConnMaxLifetime(30 * time.Minute)
 
 	return &Db{

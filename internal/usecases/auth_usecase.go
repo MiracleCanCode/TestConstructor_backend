@@ -7,7 +7,6 @@ import (
 	"github.com/server/configs"
 	"github.com/server/internal/dtos"
 	"github.com/server/internal/repository"
-	"github.com/server/pkg/cookie"
 	"github.com/server/pkg/jwt"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
@@ -16,7 +15,6 @@ import (
 type AuthInterface interface {
 	Login(data *dtos.LoginRequest, w http.ResponseWriter, r *http.Request) (*dtos.LoginResponse, error)
 	Registration(data *dtos.RegistrationRequest) (*dtos.RegistrationResponse, error)
-	Logout(w http.ResponseWriter, r *http.Request) error
 }
 
 type Auth struct {
@@ -44,7 +42,7 @@ func NewAuth(
 }
 
 func (s *Auth) Login(data *dtos.LoginRequest, w http.ResponseWriter, r *http.Request) (*dtos.LoginResponse, error) {
-	cookies := cookie.New(w, r, s.logger)
+	// cookies := cookie.New(w, r, s.logger)
 	user, err := s.userRepo.GetUserByLogin(data.Login)
 	if err != nil || user == nil {
 		s.logger.Error("User not found", zap.String("login", data.Login))
@@ -62,7 +60,7 @@ func (s *Auth) Login(data *dtos.LoginRequest, w http.ResponseWriter, r *http.Req
 		return nil, errors.New("failed to create access token")
 	}
 
-	cookies.Set("token", token)
+	// cookies.Set("token", token)
 
 	refreshToken, err := s.tokenProvider.CreateRefreshToken(user.Login)
 	if err != nil {
@@ -105,24 +103,4 @@ func (s *Auth) Registration(data *dtos.RegistrationRequest) (*dtos.RegistrationR
 		Email:        data.Email,
 		RefreshToken: refreshToken,
 	}, nil
-}
-
-func (s *Auth) Logout(w http.ResponseWriter, r *http.Request) error {
-	cookies := cookie.New(w, r, s.logger)
-	JWT := jwt.NewJwt(s.logger)
-
-	login, err := JWT.ExtractUserFromCookie(r, "token")
-	if err != nil {
-		s.logger.Error("Failed to extract access_token form cookie", zap.Error(err))
-		return errors.New("failed to extract access token from cookie")
-	}
-
-	cookies.Delete("token")
-
-	if err := s.userRepo.DeleteRefreshToken(login); err != nil {
-		s.logger.Error("Failed to delete refresh token", zap.Error(err))
-		return errors.New("failed to delete refresh token")
-	}
-
-	return nil
 }
