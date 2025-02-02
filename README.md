@@ -46,7 +46,12 @@
 git clone https://github.com/MiracleCanCode/TestConstructor_backend.git
 ```
 
-### Run
+### Create .env.production
+```bash
+touch .env.production
+```
+
+### Run project
 
 ```sh
 make docker-build
