@@ -8,11 +8,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserInterface interface {
-	UpdateUser(user *dtos.UpdateUserRequest) error
-	CreateUser(user models.User) error
+type UserReader interface {
 	GetUserByLogin(login string) (*models.User, error)
 	GetUserByEmail(email string) (*models.User, error)
+}
+
+type UserWriter interface {
+	UpdateUser(user *dtos.UpdateUserRequest) error
+	CreateUser(user models.User) error
 	DeleteRefreshToken(login string) error
 }
 

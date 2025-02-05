@@ -23,23 +23,26 @@ type TestManagerInterface interface {
 }
 
 type TestManager struct {
-	testRepo     repository.TestManagerInterface
-	userRepo     repository.UserInterface
+	testReader   repository.TestManagerReader
+	testWriter   repository.TestManagerWriter
+	userRepo     repository.UserReader
 	logger       *zap.Logger
 	cacheManager cachemanager.CacheManagerInterface
 	queueManager queuemanager.QueueManagerInterface
 }
 
 func NewTestManager(
-	testRepo repository.TestManagerInterface,
-	userRepo repository.UserInterface,
+	testReader repository.TestManagerReader,
+	testWriter repository.TestManagerWriter,
+	userRepo repository.UserReader,
 	logger *zap.Logger,
 ) *TestManager {
 	rdb := redis.New()
 	cacheManager := cachemanager.New(rdb, logger)
 	queueManager := queuemanager.New(logger)
 	return &TestManager{
-		testRepo:     testRepo,
+		testReader:   testReader,
+		testWriter:   testWriter,
 		userRepo:     userRepo,
 		logger:       logger,
 		cacheManager: cacheManager,
@@ -58,7 +61,7 @@ func (s *TestManager) GetAllTests(userID uint, limit, offset int) ([]models.Test
 		return result.Tests, result.Count, nil
 	}
 
-	tests, count, err := s.testRepo.GetAllTests(userID, offset, limit)
+	tests, count, err := s.testReader.GetAllTests(userID, offset, limit)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -87,7 +90,7 @@ func (s *TestManager) GetTestById(id uint, userLogin string) (*models.Test, stri
 		return &cachedTest, constants.PassingRole, nil
 	}
 
-	test, err := s.testRepo.GetTestById(id)
+	test, err := s.testReader.GetTestById(id)
 	if err != nil {
 		return nil, "", err
 	}
@@ -108,7 +111,7 @@ func (s *TestManager) GetTestById(id uint, userLogin string) (*models.Test, stri
 }
 
 func (s *TestManager) CreateTest(data *models.Test) error {
-	if err := s.testRepo.CreateTest(data); err != nil {
+	if err := s.testWriter.CreateTest(data); err != nil {
 		return err
 	}
 
@@ -129,7 +132,7 @@ func (s *TestManager) DeleteTest(id uint, login string) error {
 		s.logger.Warn("Failed to invalidate cache", zap.Error(err))
 	}
 
-	test, err := s.testRepo.GetTestById(id)
+	test, err := s.testReader.GetTestById(id)
 	if err != nil {
 		return errors.New(constants.GetTestByIdError)
 	}
@@ -138,11 +141,11 @@ func (s *TestManager) DeleteTest(id uint, login string) error {
 		return errors.New(constants.ErrorDeleteTest)
 	}
 
-	return s.testRepo.DeleteTest(id)
+	return s.testWriter.DeleteTest(id)
 }
 
 func (s *TestManager) ChangeActiveStatus(status bool, testId uint, userLogin string) error {
-	test, err := s.testRepo.GetTestById(testId)
+	test, err := s.testReader.GetTestById(testId)
 	if err != nil {
 		return err
 	}
@@ -164,7 +167,7 @@ func (s *TestManager) ChangeActiveStatus(status bool, testId uint, userLogin str
 		s.logger.Warn("Failed to invalidate cache", zap.Error(err))
 	}
 
-	return s.testRepo.ChangeActiveStatus(status, testId)
+	return s.testWriter.ChangeActiveStatus(status, testId)
 }
 
 func (s *TestManager) deleteTestFromCache(testId uint) error {

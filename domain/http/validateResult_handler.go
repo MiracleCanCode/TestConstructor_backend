@@ -30,7 +30,7 @@ func NewValidateResult(db *postgresql.Db, router *mux.Router, logger *zap.Logger
 		db:      db,
 		router:  router,
 		logger:  logger,
-		service: usecases.NewTestValidator(testManagerRepo, logger),
+		service: usecases.NewTestValidator(testManagerRepo, testManagerRepo, logger),
 	}
 
 	handler.router.HandleFunc("/api/test/validate", middleware.IsAuth(handler.ValidateResult())).Methods(http.MethodPost)
@@ -38,7 +38,11 @@ func NewValidateResult(db *postgresql.Db, router *mux.Router, logger *zap.Logger
 
 func (s *ValidateResult) ValidateResult() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
+		defer func() {
+			if err := r.Body.Close(); err != nil {
+				s.logger.Warn("Failed to close request body", zap.Error(err))
+			}
+		}()
 
 		var payload dtos.ValidateResultRequestPayload
 		errorHandler := errorshandler.New(s.logger, w, r)

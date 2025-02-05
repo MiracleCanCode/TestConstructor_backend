@@ -13,28 +13,31 @@ type TestValidatorInterface interface {
 }
 
 type TestValidator struct {
-	testRepo repository.TestManagerInterface
-	logger   *zap.Logger
+	testReader repository.TestManagerReader
+	testWriter repository.TestManagerWriter
+	logger     *zap.Logger
 }
 
 func NewTestValidator(
-	testRepo repository.TestManagerInterface,
+	testReader repository.TestManagerReader,
+	testWriter repository.TestManagerWriter,
 	logger *zap.Logger,
 ) *TestValidator {
 	return &TestValidator{
-		testRepo: testRepo,
-		logger:   logger,
+		testReader: testReader,
+		testWriter: testWriter,
+		logger:     logger,
 	}
 }
 
 func (s *TestValidator) Validate(test *models.Test) (*float64, error) {
-	exampleTest, err := s.testRepo.GetTestById(test.ID)
+	exampleTest, err := s.testReader.GetTestById(test.ID)
 	if err != nil {
 		s.logger.Error("Failed to get test by ID", zap.Error(err))
 		return nil, errors.New("failed to fetch test")
 	}
 
-	err = s.testRepo.IncrementCountUserPast(test.ID, int(exampleTest.CountUserPast))
+	err = s.testWriter.IncrementCountUserPast(test.ID, int(exampleTest.CountUserPast))
 	if err != nil {
 		s.logger.Error("Failed to increment count user past", zap.Error(err))
 		return nil, errors.New("failed to increment count user past")

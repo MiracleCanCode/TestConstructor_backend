@@ -27,7 +27,7 @@ type TestManagerHandler struct {
 func NewTestManager(logger *zap.Logger, db *postgresql.Db, router *mux.Router) {
 	testManagerRepo := repository.NewTestManager(db)
 	userRepo := repository.NewUser(db, logger)
-	service := usecases.NewTestManager(testManagerRepo, userRepo, logger)
+	service := usecases.NewTestManager(testManagerRepo, testManagerRepo, userRepo, logger)
 	handler := &TestManagerHandler{
 		logger:   logger,
 		db:       db,

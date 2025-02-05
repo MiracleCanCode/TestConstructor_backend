@@ -5,9 +5,12 @@ import (
 	"github.com/server/pkg/db/postgresql"
 )
 
-type TestManagerInterface interface {
+type TestManagerReader interface {
 	GetAllTests(user_id uint, offset, limit int) ([]models.Test, int64, error)
 	GetTestById(id uint) (*models.Test, error)
+}
+
+type TestManagerWriter interface {
 	CreateTest(data *models.Test) error
 	DeleteTest(id uint) error
 	ChangeActiveStatus(status bool, testId uint) error

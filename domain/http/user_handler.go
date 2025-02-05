@@ -43,14 +43,18 @@ func NewUser(logger *zap.Logger, db *postgresql.Db, router *mux.Router, cfg *con
 
 func (s *User) GetUserData() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
+		defer func() {
+			if err := r.Body.Close(); err != nil {
+				s.logger.Warn("Failed to close request body", zap.Error(err))
+			}
+		}()
 
 		errorHandler := errorshandler.New(s.logger, w, r)
 		JWT := jwt.NewJwt(s.logger)
 		jsonHelper := json.New(r, s.logger, w)
 		rdb := redis.New()
 		cache := cachemanager.New(rdb, s.logger)
-		userUsecase := usecases.NewUser(s.repository, s.logger, cache)
+		userUsecase := usecases.NewUser(s.repository, s.repository, s.logger, cache)
 
 		login, err := JWT.ExtractUserFromToken(r)
 		if err != nil {
@@ -76,14 +80,18 @@ func (s *User) GetUserData() http.HandlerFunc {
 
 func (s *User) UpdateUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
+		defer func() {
+			if err := r.Body.Close(); err != nil {
+				s.logger.Warn("Failed to close request body", zap.Error(err))
+			}
+		}()
 
 		var payload dtos.UpdateUserRequest
 		errorHandler := errorshandler.New(s.logger, w, r)
 		json := json.New(r, s.logger, w)
 		rdb := redis.New()
 		cache := cachemanager.New(rdb, s.logger)
-		userUsecase := usecases.NewUser(s.repository, s.logger, cache)
+		userUsecase := usecases.NewUser(s.repository, s.repository, s.logger, cache)
 
 		if err := json.DecodeAndValidationBody(&payload); err != nil {
 			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
@@ -102,14 +110,18 @@ func (s *User) UpdateUser() http.HandlerFunc {
 
 func (s *User) GetUserByLogin() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
+		defer func() {
+			if err := r.Body.Close(); err != nil {
+				s.logger.Warn("Failed to close request body", zap.Error(err))
+			}
+		}()
 
 		var payload dtos.GetUserByLoginRequest
 		errorHandler := errorshandler.New(s.logger, w, r)
 		json := json.New(r, s.logger, w)
 		rdb := redis.New()
 		cache := cachemanager.New(rdb, s.logger)
-		userUsecase := usecases.NewUser(s.repository, s.logger, cache)
+		userUsecase := usecases.NewUser(s.repository, s.repository, s.logger, cache)
 
 		if err := json.DecodeAndValidationBody(&payload); err != nil {
 			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)

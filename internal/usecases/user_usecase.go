@@ -17,14 +17,21 @@ type UserInterface interface {
 }
 
 type User struct {
-	userRepo     repository.UserInterface
+	userReader   repository.UserReader
+	userWriter   repository.UserWriter
 	logger       *zap.Logger
 	cacheManager cachemanager.CacheManagerInterface
 }
 
-func NewUser(userRepo repository.UserInterface, logger *zap.Logger, cacheManager cachemanager.CacheManagerInterface) *User {
+func NewUser(
+	userReader repository.UserReader,
+	userWriter repository.UserWriter,
+	logger *zap.Logger,
+	cacheManager cachemanager.CacheManagerInterface,
+) *User {
 	return &User{
-		userRepo:     userRepo,
+		userReader:   userReader,
+		userWriter:   userWriter,
 		logger:       logger,
 		cacheManager: cacheManager,
 	}
@@ -38,7 +45,7 @@ func (s *User) FindUserByLogin(login string) (*models.User, error) {
 		return &result, nil
 	}
 
-	user, err := s.userRepo.GetUserByLogin(login)
+	user, err := s.userReader.GetUserByLogin(login)
 	if err != nil {
 		return nil, err
 	}
@@ -55,5 +62,5 @@ func (s *User) UpdateUserData(user dtos.UpdateUserRequest) error {
 		return err
 	}
 
-	return s.userRepo.UpdateUser(&user)
+	return s.userWriter.UpdateUser(&user)
 }

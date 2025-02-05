@@ -18,7 +18,8 @@ type AuthInterface interface {
 }
 
 type Auth struct {
-	userRepo      repository.UserInterface
+	userReader    repository.UserReader
+	userWriter    repository.UserWriter
 	authRepo      repository.AuthInterface
 	logger        *zap.Logger
 	tokenProvider jwt.JWTInterface
@@ -26,14 +27,16 @@ type Auth struct {
 }
 
 func NewAuth(
-	userRepo repository.UserInterface,
+	userReader repository.UserReader,
+	userWriter repository.UserWriter,
 	authRepo repository.AuthInterface,
 	logger *zap.Logger,
 	tokenProvider jwt.JWTInterface,
 	config *configs.Config,
 ) *Auth {
 	return &Auth{
-		userRepo:      userRepo,
+		userReader:    userReader,
+		userWriter:    userWriter,
 		authRepo:      authRepo,
 		logger:        logger,
 		tokenProvider: tokenProvider,
@@ -42,8 +45,7 @@ func NewAuth(
 }
 
 func (s *Auth) Login(data *dtos.LoginRequest, w http.ResponseWriter, r *http.Request) (*dtos.LoginResponse, error) {
-	// cookies := cookie.New(w, r, s.logger)
-	user, err := s.userRepo.GetUserByLogin(data.Login)
+	user, err := s.userReader.GetUserByLogin(data.Login)
 	if err != nil || user == nil {
 		s.logger.Error("User not found", zap.String("login", data.Login))
 		return nil, errors.New("user not found by login")
@@ -59,8 +61,6 @@ func (s *Auth) Login(data *dtos.LoginRequest, w http.ResponseWriter, r *http.Req
 		s.logger.Error("Failed to create access token", zap.Error(err))
 		return nil, errors.New("failed to create access token")
 	}
-
-	// cookies.Set("token", token)
 
 	refreshToken, err := s.tokenProvider.CreateRefreshToken(user.Login)
 	if err != nil {
@@ -80,7 +80,7 @@ func (s *Auth) Login(data *dtos.LoginRequest, w http.ResponseWriter, r *http.Req
 }
 
 func (s *Auth) Registration(data *dtos.RegistrationRequest) (*dtos.RegistrationResponse, error) {
-	if err := s.userRepo.CreateUser(data.ToUser()); err != nil {
+	if err := s.userWriter.CreateUser(data.ToUser()); err != nil {
 		s.logger.Error("Failed to register user", zap.Error(err))
 		return nil, errors.New("failed to registration user")
 	}

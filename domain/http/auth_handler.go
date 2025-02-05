@@ -20,19 +20,17 @@ import (
 type AuthHandler struct {
 	logger      *zap.Logger
 	authUsecase usecases.AuthInterface
-	userRepo    repository.UserInterface
 }
 
 func NewAuthHandler(router *mux.Router, logger *zap.Logger, db *postgresql.Db, cfg *configs.Config) {
 	userRepo := repository.NewUser(db, logger)
 	authRepo := repository.NewAuth(db, logger)
 	jwtService := jwt.NewJwt(logger)
-	authUsecase := usecases.NewAuth(userRepo, authRepo, logger, jwtService, cfg)
+	authUsecase := usecases.NewAuth(userRepo, userRepo, authRepo, logger, jwtService, cfg)
 
 	handler := &AuthHandler{
 		logger:      logger,
 		authUsecase: authUsecase,
-		userRepo:    userRepo,
 	}
 
 	router.HandleFunc("/api/auth/login", handler.Login).Methods(http.MethodPost)
@@ -40,43 +38,35 @@ func NewAuthHandler(router *mux.Router, logger *zap.Logger, db *postgresql.Db, c
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		if err := r.Body.Close(); err != nil {
-			h.logger.Warn("Failed to close request body", zap.Error(err))
-		}
-	}()
+	defer r.Body.Close()
+
 	errorHandler := errorshandler.New(h.logger, w, r)
 	var payload dtos.LoginRequest
 	jsonUtil := json.New(r, h.logger, w)
+
 	if err := jsonUtil.DecodeAndValidationBody(&payload); err != nil {
-		errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
-		return
-	}
-	token, err := h.authUsecase.Login(&payload, w, r)
-	if err != nil {
-		errorHandler.HandleError(constants.LoginOrPasswordIncorrect, http.StatusBadGateway, err)
+		errorHandler.HandleError(constants.InternalServerError, http.StatusBadRequest, err)
 		return
 	}
 
-	if err := jsonUtil.Encode(http.StatusOK, token); err != nil {
-		errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
+	token, err := h.authUsecase.Login(&payload, w, r)
+	if err != nil {
+		errorHandler.HandleError(constants.LoginOrPasswordIncorrect, http.StatusUnauthorized, err)
+		return
 	}
-	w.WriteHeader(http.StatusAccepted)
+
+	jsonUtil.Encode(http.StatusOK, token)
 }
 
 func (h *AuthHandler) Registration(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		if err := r.Body.Close(); err != nil {
-			h.logger.Warn("Failed to close request body", zap.Error(err))
-		}
-	}()
+	defer r.Body.Close()
 
 	errorHandler := errorshandler.New(h.logger, w, r)
-
 	var payload dtos.RegistrationRequest
 	jsonUtil := json.New(r, h.logger, w)
+
 	if err := jsonUtil.DecodeAndValidationBody(&payload); err != nil {
-		errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
+		errorHandler.HandleError(constants.InternalServerError, http.StatusBadRequest, err)
 		return
 	}
 
@@ -85,9 +75,6 @@ func (h *AuthHandler) Registration(w http.ResponseWriter, r *http.Request) {
 		errorHandler.HandleError(constants.ErrRegistration, http.StatusBadRequest, err)
 		return
 	}
-	if err := jsonUtil.Encode(http.StatusOK, result); err != nil {
-		errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
-		return
-	}
-	w.WriteHeader(http.StatusAccepted)
+
+	jsonUtil.Encode(http.StatusCreated, result)
 }
