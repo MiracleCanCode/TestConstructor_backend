@@ -8,7 +8,7 @@ GO=go
 GOFMT=gofmt
 GOFLAGS=-v
 LDFLAGS=-s -w
-GOLINT=golangci-lint 
+GOLINT=golangci-lint
 DOCKERCOMPOSE=docker-compose
 
 migrate:
@@ -17,14 +17,11 @@ migrate:
 lint:
 	$(GOLINT) run ./...
 
-docker-build:
-	$(DOCKERCOMPOSE) -f $(DOCKER_COMPOSE_DIR) up --build
-   
+build:
+	$(DOCKERCOMPOSE) -f $(DOCKER_COMPOSE_DIR) up --build;
+
 docker-run:
 	$(DOCKERCOMPOSE) -f $(DOCKER_COMPOSE_DIR) up
-
-build:
-	$(GO) build $(GOFLAGS) -o $(BINARY_NAME) $(SRC_DIR)
 
 run:
 	$(GO) run $(SRC_DIR)

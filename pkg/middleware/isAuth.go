@@ -2,10 +2,12 @@ package middleware
 
 import (
 	"net/http"
+	"time"
 
-	"github.com/MiracleCanCode/example_configuration_logger"
+	logger "github.com/MiracleCanCode/example_configuration_logger"
 	"github.com/server/configs"
 	"github.com/server/internal/repository"
+	cookiesmanager "github.com/server/pkg/cookiesManager"
 	"github.com/server/pkg/db/postgresql"
 	"github.com/server/pkg/jwt"
 	"go.uber.org/zap"
@@ -15,6 +17,7 @@ func IsAuth(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		log := logger.Logger(logger.DefaultLoggerConfig())
 		JWT := jwt.NewJwt(log)
+		cookie := cookiesmanager.New(r, log)
 
 		cfg, err := configs.Load(log)
 		if err != nil {
@@ -60,7 +63,7 @@ func IsAuth(next http.Handler) http.HandlerFunc {
 			return
 		}
 
-		r.Header.Set("Authorization", "Bearer "+accessToken)
+		cookie.Set("token", accessToken, time.Minute*15, true, w)
 
 		next.ServeHTTP(w, r)
 	}

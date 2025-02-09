@@ -10,7 +10,6 @@ import (
 	cachemanager "github.com/server/pkg/cacheManager"
 	"github.com/server/pkg/constants"
 	"github.com/server/pkg/db/redis"
-	queuemanager "github.com/server/pkg/queueManager"
 	"go.uber.org/zap"
 )
 
@@ -28,7 +27,6 @@ type TestManager struct {
 	userRepo     repository.UserReader
 	logger       *zap.Logger
 	cacheManager cachemanager.CacheManagerInterface
-	queueManager queuemanager.QueueManagerInterface
 }
 
 func NewTestManager(
@@ -39,14 +37,12 @@ func NewTestManager(
 ) *TestManager {
 	rdb := redis.New()
 	cacheManager := cachemanager.New(rdb, logger)
-	queueManager := queuemanager.New(logger)
 	return &TestManager{
 		testReader:   testReader,
 		testWriter:   testWriter,
 		userRepo:     userRepo,
 		logger:       logger,
 		cacheManager: cacheManager,
-		queueManager: queueManager,
 	}
 }
 

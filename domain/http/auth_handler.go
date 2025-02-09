@@ -2,6 +2,7 @@ package http
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/server/configs"
@@ -9,6 +10,7 @@ import (
 	"github.com/server/internal/repository"
 	"github.com/server/internal/usecases"
 	"github.com/server/pkg/constants"
+	cookiesmanager "github.com/server/pkg/cookiesManager"
 	"github.com/server/pkg/db/postgresql"
 	errorshandler "github.com/server/pkg/errorsHandler"
 	"github.com/server/pkg/json"
@@ -39,7 +41,7 @@ func NewAuthHandler(router *mux.Router, logger *zap.Logger, db *postgresql.Db, c
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-
+	cookie := cookiesmanager.New(r, h.logger)
 	errorHandler := errorshandler.New(h.logger, w, r)
 	var payload dtos.LoginRequest
 	jsonUtil := json.New(r, h.logger, w)
@@ -55,6 +57,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cookie.Set("token", token.Token, time.Minute*15, true, w)
 	jsonUtil.Encode(http.StatusOK, token)
 }
 

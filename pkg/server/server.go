@@ -40,8 +40,8 @@ func (s *api) RunApp() error {
 
 func (s *api) FillEndpoints() {
 	delivery.NewAuthHandler(s.router, s.log, s.db, s.cfg)
-	delivery.NewTestManager(s.log, s.db, s.router)
-	delivery.NewValidateResult(s.db, s.router, s.log)
-	delivery.NewUser(s.log, s.db, s.router, s.cfg)
+	delivery.NewTestManagerHandler(s.log, s.db, s.router)
+	delivery.NewValidateResultHandler(s.db, s.router, s.log)
+	delivery.NewUserHandler(s.log, s.db, s.router, s.cfg)
 	s.router.Handle("/metrics", promhttp.Handler())
 }

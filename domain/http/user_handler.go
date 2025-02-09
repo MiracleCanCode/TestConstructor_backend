@@ -20,14 +20,14 @@ import (
 )
 
 type User struct {
-	logger     *zap.Logger
+	cfg        *configs.Config
 	db         *postgresql.Db
+	logger     *zap.Logger
 	router     *mux.Router
 	repository *repository.User
-	cfg        *configs.Config
 }
 
-func NewUser(logger *zap.Logger, db *postgresql.Db, router *mux.Router, cfg *configs.Config) {
+func NewUserHandler(logger *zap.Logger, db *postgresql.Db, router *mux.Router, cfg *configs.Config) {
 	handler := &User{
 		logger:     logger,
 		db:         db,
@@ -39,6 +39,7 @@ func NewUser(logger *zap.Logger, db *postgresql.Db, router *mux.Router, cfg *con
 	router.HandleFunc("/api/user/getData", middleware.IsAuth(handler.GetUserData())).Methods(http.MethodGet)
 	router.HandleFunc("/api/user/update", middleware.IsAuth(handler.UpdateUser())).Methods(http.MethodPost)
 	router.HandleFunc("/api/user/getByLogin", middleware.IsAuth(handler.GetUserByLogin())).Methods(http.MethodPost)
+	router.HandleFunc("/api/user/logout", middleware.IsAuth(handler.Logout())).Methods(http.MethodGet)
 }
 
 func (s *User) GetUserData() http.HandlerFunc {
@@ -137,6 +138,26 @@ func (s *User) GetUserByLogin() http.HandlerFunc {
 		modifiedUser := dtos.ToGetUserByLoginResponse(user)
 		if err := json.Encode(200, modifiedUser); err != nil {
 			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
+			return
+		}
+		w.WriteHeader(http.StatusAccepted)
+	}
+}
+
+func (s *User) Logout() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := r.Body.Close(); err != nil {
+				s.logger.Warn("Failed to close request body", zap.Error(err))
+			}
+		}()
+		rdb := redis.New()
+		cache := cachemanager.New(rdb, s.logger)
+		userUsecase := usecases.NewUser(s.repository, s.repository, s.logger, cache)
+
+		if err := userUsecase.Logout(w, r); err != nil {
+			s.logger.Error("Logout", zap.Error(err))
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		w.WriteHeader(http.StatusAccepted)

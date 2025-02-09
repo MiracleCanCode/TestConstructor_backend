@@ -3,11 +3,11 @@ package jwt
 import (
 	"errors"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/server/configs"
+	cookiesmanager "github.com/server/pkg/cookiesManager"
 	"go.uber.org/zap"
 )
 
@@ -22,6 +22,7 @@ type JWTInterface interface {
 
 type JWT struct {
 	Secret string
+	logger *zap.Logger
 }
 
 func NewJwt(logger *zap.Logger) *JWT {
@@ -32,6 +33,7 @@ func NewJwt(logger *zap.Logger) *JWT {
 	}
 	return &JWT{
 		Secret: cfg.SECRET,
+		logger: logger,
 	}
 }
 
@@ -73,16 +75,11 @@ func (s *JWT) VerifyToken(tokenString string) (*jwt.Token, jwt.MapClaims, error)
 }
 
 func (s *JWT) ExtractUserFromToken(r *http.Request) (string, error) {
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		return "", errors.New("token is exists")
+	cookie := cookiesmanager.New(r, s.logger)
+	authToken, err := cookie.Get("token")
+	if err != nil {
+		return "", errors.New("failed extract token from cookie")
 	}
-
-	authToken := strings.TrimPrefix(authHeader, "Bearer ")
-	if authToken == "" {
-		return "", errors.New("")
-	}
-
 	_, claims, err := s.VerifyToken(authToken)
 	if err != nil {
 		return "", err

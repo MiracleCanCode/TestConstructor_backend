@@ -24,7 +24,7 @@ type ValidateResult struct {
 	logger  *zap.Logger
 }
 
-func NewValidateResult(db *postgresql.Db, router *mux.Router, logger *zap.Logger) {
+func NewValidateResultHandler(db *postgresql.Db, router *mux.Router, logger *zap.Logger) {
 	testManagerRepo := repository.NewTestManager(db)
 	handler := &ValidateResult{
 		db:      db,

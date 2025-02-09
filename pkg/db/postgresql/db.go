@@ -67,3 +67,15 @@ func (d *Db) Close() {
 		sqlDb.Close()
 	}
 }
+
+func (d *Db) NewTestDb(conf *configs.Config, log *zap.Logger) (*Db, error) {
+	db, err := gorm.Open(postgres.Open(conf.DB), &gorm.Config{})
+	if err != nil {
+		log.Error("Failed to conn db", zap.Error(err))
+		return nil, err
+	}
+
+	return &Db{
+		db,
+	}, nil
+}
