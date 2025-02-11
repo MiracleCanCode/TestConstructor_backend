@@ -9,7 +9,7 @@ GOFMT=gofmt
 GOFLAGS=-v
 LDFLAGS=-s -w
 GOLINT=golangci-lint
-DOCKERCOMPOSE=docker-compose
+DOCKERCOMPOSE=docker compose
 
 migrate:
 	$(GO) run $(MIGRATE_DIR)
@@ -17,10 +17,10 @@ migrate:
 lint:
 	$(GOLINT) run ./...
 
-build:
+container-build:
 	$(DOCKERCOMPOSE) -f $(DOCKER_COMPOSE_DIR) up --build;
 
-docker-run:
+container-run:
 	$(DOCKERCOMPOSE) -f $(DOCKER_COMPOSE_DIR) up
 
 run:

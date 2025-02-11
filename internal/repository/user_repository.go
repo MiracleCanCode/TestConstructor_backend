@@ -1,30 +1,35 @@
 package repository
 
 import (
+	"github.com/server/entity"
 	"github.com/server/internal/dtos"
-	"github.com/server/internal/models"
-	"github.com/server/pkg/db/postgresql"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type UserReader interface {
-	GetUserByLogin(login string) (*models.User, error)
-	GetUserByEmail(email string) (*models.User, error)
+	GetUserByLogin(login string) (*entity.User, error)
+	GetUserByEmail(email string) (*entity.User, error)
 }
 
 type UserWriter interface {
 	UpdateUser(user *dtos.UpdateUserRequest) error
-	CreateUser(user models.User) error
+	CreateUser(user entity.User) error
 	DeleteRefreshToken(login string) error
 }
 
+type UserInterface interface {
+	UserReader
+	UserWriter
+}
+
 type User struct {
-	db     *postgresql.Db
+	db     *gorm.DB
 	logger *zap.Logger
 }
 
-func NewUser(db *postgresql.Db, logger *zap.Logger) *User {
+func NewUser(db *gorm.DB, logger *zap.Logger) *User {
 	return &User{
 		db:     db,
 		logger: logger,
@@ -45,7 +50,7 @@ func (s *User) UpdateUser(user *dtos.UpdateUserRequest) error {
 		return nil
 	}
 
-	if err := s.db.Model(&models.User{}).
+	if err := s.db.Model(&entity.User{}).
 		Where("login = ?", user.UserLogin).
 		Updates(updateData).Error; err != nil {
 		s.logger.Error("Failed to update user data", zap.Error(err))
@@ -55,7 +60,7 @@ func (s *User) UpdateUser(user *dtos.UpdateUserRequest) error {
 	return nil
 }
 
-func (s *User) CreateUser(user models.User) error {
+func (s *User) CreateUser(user entity.User) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
@@ -69,8 +74,8 @@ func (s *User) CreateUser(user models.User) error {
 	return nil
 }
 
-func (s *User) GetUserByLogin(login string) (*models.User, error) {
-	var user models.User
+func (s *User) GetUserByLogin(login string) (*entity.User, error) {
+	var user entity.User
 
 	if err := s.db.Select("id, login, email, name, avatar, password, refresh_token").
 		Where("login = ?", login).
@@ -82,8 +87,8 @@ func (s *User) GetUserByLogin(login string) (*models.User, error) {
 	return &user, nil
 }
 
-func (s *User) GetUserByEmail(email string) (*models.User, error) {
-	var user models.User
+func (s *User) GetUserByEmail(email string) (*entity.User, error) {
+	var user entity.User
 
 	if err := s.db.Select("id, login, email, name, avatar, refresh_token").
 		Where("email = ?", email).
@@ -96,7 +101,7 @@ func (s *User) GetUserByEmail(email string) (*models.User, error) {
 }
 
 func (s *User) DeleteRefreshToken(login string) error {
-	var user models.User
+	var user entity.User
 
 	if err := s.db.Where("login = ?", login).First(&user).Error; err != nil {
 		return err

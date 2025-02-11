@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/server/entity"
 	"github.com/server/internal/dtos"
-	"github.com/server/internal/models"
 	"github.com/server/internal/repository"
 	cachemanager "github.com/server/pkg/cacheManager"
 	cookiesmanager "github.com/server/pkg/cookiesManager"
@@ -15,41 +15,38 @@ import (
 )
 
 type UserInterface interface {
-	FindUserByLogin(login string) (*models.User, error)
+	FindUserByLogin(login string) (*entity.User, error)
 	UpdateUserData(user dtos.UpdateUserRequest) error
 	Logout(w http.ResponseWriter, r *http.Request) error
 }
 
 type User struct {
-	userReader   repository.UserReader
-	userWriter   repository.UserWriter
+	userRepo     repository.UserInterface
 	logger       *zap.Logger
 	cacheManager cachemanager.CacheManagerInterface
 }
 
 func NewUser(
-	userReader repository.UserReader,
-	userWriter repository.UserWriter,
+	userRepo repository.UserInterface,
 	logger *zap.Logger,
 	cacheManager cachemanager.CacheManagerInterface,
 ) *User {
 	return &User{
-		userReader:   userReader,
-		userWriter:   userWriter,
+		userRepo:     userRepo,
 		logger:       logger,
 		cacheManager: cacheManager,
 	}
 }
 
-func (s *User) FindUserByLogin(login string) (*models.User, error) {
+func (s *User) FindUserByLogin(login string) (*entity.User, error) {
 	cacheKey := fmt.Sprintf("user:login:%s", login)
-	var result models.User
+	var result entity.User
 
 	if err := s.cacheManager.Get(cacheKey, &result); err == nil {
 		return &result, nil
 	}
 
-	user, err := s.userReader.GetUserByLogin(login)
+	user, err := s.userRepo.GetUserByLogin(login)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +63,7 @@ func (s *User) UpdateUserData(user dtos.UpdateUserRequest) error {
 		return err
 	}
 
-	return s.userWriter.UpdateUser(&user)
+	return s.userRepo.UpdateUser(&user)
 }
 
 func (s *User) Logout(w http.ResponseWriter, r *http.Request) error {
@@ -78,7 +75,7 @@ func (s *User) Logout(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 	cookies.Delete("token", w)
-	if err := s.userWriter.DeleteRefreshToken(login); err != nil {
+	if err := s.userRepo.DeleteRefreshToken(login); err != nil {
 		s.logger.Error("Delete refresh token", zap.Error(err))
 		return err
 	}

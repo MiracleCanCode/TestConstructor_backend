@@ -1,9 +1,9 @@
 package repository
 
 import (
-	"github.com/server/internal/models"
-	"github.com/server/pkg/db/postgresql"
+	"github.com/server/entity"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 type AuthInterface interface {
@@ -11,11 +11,11 @@ type AuthInterface interface {
 }
 
 type Auth struct {
-	db     *postgresql.Db
+	db     *gorm.DB
 	logger *zap.Logger
 }
 
-func NewAuth(db *postgresql.Db, logger *zap.Logger) *Auth {
+func NewAuth(db *gorm.DB, logger *zap.Logger) *Auth {
 	return &Auth{
 		db:     db,
 		logger: logger,
@@ -23,7 +23,7 @@ func NewAuth(db *postgresql.Db, logger *zap.Logger) *Auth {
 }
 
 func (s *Auth) SaveRefreshToken(login string, refreshToken string) error {
-	user := &models.User{}
+	user := &entity.User{}
 	if err := s.db.Model(user).Where("login = ?", login).Update("refresh_token", refreshToken).Error; err != nil {
 		return err
 	}

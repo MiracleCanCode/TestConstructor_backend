@@ -1,8 +1,8 @@
 package dtos
 
-import "github.com/server/internal/models"
+import "github.com/server/entity"
 
-func ToGetUserByLoginResponse(user *models.User) *GetUserByLoginResponse {
+func ToGetUserByLoginResponse(user *entity.User) *GetUserByLoginResponse {
 	return &GetUserByLoginResponse{
 		Login:  user.Login,
 		Name:   user.Name,

@@ -1,9 +1,9 @@
 package dtos
 
-import "github.com/server/internal/models"
+import "github.com/server/entity"
 
-func (r *RegistrationRequest) ToUser() models.User {
-	return models.User{
+func (r *RegistrationRequest) ToUser() entity.User {
+	return entity.User{
 		Name:     r.Name,
 		Login:    r.Login,
 		Password: r.Password,
@@ -14,7 +14,7 @@ func (r *RegistrationRequest) ToUser() models.User {
 
 type LoginResponse struct {
 	Token string       `json:"token"`
-	User  *models.User `json:"user"`
+	User  *entity.User `json:"user"`
 }
 
 type LoginRequest struct {

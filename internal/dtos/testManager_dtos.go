@@ -1,16 +1,20 @@
 package dtos
 
-import "github.com/server/internal/models"
+import "github.com/server/entity"
 
-func MapTestModelToGetTestByIdResponse(req *models.Test, userRole string) *GetTestByIdResponse {
+func MapTestModelToGetTestByIdResponse(req *entity.Test, userRole string, userId uint) *GetTestByIdResponse {
 	return &GetTestByIdResponse{
-		Test: *req,
+		Test: entity.Test{
+			Name:      req.Name,
+			UserID:    userId,
+			Questions: mapQuestionsGetTestById(req.Questions),
+		},
 		Role: userRole,
 	}
 }
 
-func MapCreateTestRequestToModel(req *CreateTestRequest, userId uint) *models.Test {
-	test := &models.Test{
+func MapCreateTestRequestToModel(req *CreateTestRequest, userId uint) *entity.Test {
+	test := &entity.Test{
 		Name:      req.Name,
 		UserID:    userId,
 		Questions: mapQuestions(req.Questions),
@@ -19,20 +23,11 @@ func MapCreateTestRequestToModel(req *CreateTestRequest, userId uint) *models.Te
 	return test
 }
 
-func MapCreateAnonymusTestRequestToModel(req *CreateAnonymusTestRequest) *models.Test {
-	test := &models.Test{
-		Name:      req.Name,
-		Questions: mapQuestions(req.Questions),
-	}
-
-	return test
-}
-
-func mapQuestions(questions []CreateQuestionInput) []models.Question {
-	mappedQuestions := make([]models.Question, len(questions))
+func mapQuestions(questions []CreateQuestionInput) []entity.Question {
+	mappedQuestions := make([]entity.Question, len(questions))
 
 	for i, question := range questions {
-		mappedQuestions[i] = models.Question{
+		mappedQuestions[i] = entity.Question{
 			Name:        question.Name,
 			Description: question.Description,
 			Variants:    mapVariants(question.Variants),
@@ -42,11 +37,11 @@ func mapQuestions(questions []CreateQuestionInput) []models.Question {
 	return mappedQuestions
 }
 
-func mapVariants(variants []CreateVariantInput) []models.Variant {
-	mappedVariants := make([]models.Variant, len(variants))
+func mapVariants(variants []CreateVariantInput) []entity.Variant {
+	mappedVariants := make([]entity.Variant, len(variants))
 
 	for i, variant := range variants {
-		mappedVariants[i] = models.Variant{
+		mappedVariants[i] = entity.Variant{
 			Name:      variant.Name,
 			IsCorrect: variant.IsCorrect,
 		}
@@ -54,7 +49,33 @@ func mapVariants(variants []CreateVariantInput) []models.Variant {
 
 	return mappedVariants
 }
-func SetGetAllTests(tests []models.Test, count int64) *GetAllTestsResponse {
+
+func mapQuestionsGetTestById(questions []entity.Question) []entity.Question {
+	mappedQuestions := make([]entity.Question, len(questions))
+
+	for i, question := range questions {
+		mappedQuestions[i] = entity.Question{
+			Name:        question.Name,
+			Description: question.Description,
+			Variants:    mapVariantsGetTestById(question.Variants),
+		}
+	}
+
+	return mappedQuestions
+}
+func mapVariantsGetTestById(variants []entity.Variant) []entity.Variant {
+	mappedVariants := make([]entity.Variant, len(variants))
+
+	for i, variant := range variants {
+		mappedVariants[i] = entity.Variant{
+			Name: variant.Name,
+		}
+	}
+
+	return mappedVariants
+}
+
+func SetGetAllTests(tests []entity.Test, count int64) *GetAllTestsResponse {
 	return &GetAllTestsResponse{
 		Tests: tests,
 		Count: count,
@@ -72,23 +93,18 @@ type GetTestByIdRequest struct {
 }
 
 type GetAllTestsResponse struct {
-	Tests []models.Test `json:"tests"`
+	Tests []entity.Test `json:"tests"`
 	Count int64         `json:"count"`
 }
 
 type GetTestByIdResponse struct {
-	models.Test
+	entity.Test
 	Role string `json:"user_role"`
 }
 
 type CreateTestRequest struct {
 	Name      string                `json:"name" validate:"required"`
 	Questions []CreateQuestionInput `json:"questions" validate:"required"`
-}
-
-type CreateAnonymusTestRequest struct {
-	Name      string                `json:"name" validate:"required"`
-	Questions []CreateQuestionInput `json:"questions"`
 }
 
 type CreateQuestionInput struct {

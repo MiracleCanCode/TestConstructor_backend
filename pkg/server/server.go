@@ -6,21 +6,21 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/server/configs"
-	delivery "github.com/server/domain/http"
-	"github.com/server/pkg/db/postgresql"
-	"github.com/server/pkg/middleware"
+	delivery "github.com/server/delivery/http"
+	"github.com/server/delivery/http/middleware"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 type api struct {
 	addr   string
 	router *mux.Router
-	db     *postgresql.Db
+	db     *gorm.DB
 	log    *zap.Logger
 	cfg    *configs.Config
 }
 
-func New(db *postgresql.Db, logger *zap.Logger, cfg *configs.Config) *api {
+func New(db *gorm.DB, logger *zap.Logger, cfg *configs.Config) *api {
 	router := mux.NewRouter()
 
 	return &api{

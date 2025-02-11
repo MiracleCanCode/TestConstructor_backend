@@ -3,15 +3,15 @@ package main
 import (
 	"os"
 
-	"github.com/MiracleCanCode/example_configuration_logger"
 	"github.com/server/configs"
-	"github.com/server/internal/models"
+	"github.com/server/entity"
 	"github.com/server/pkg/db/postgresql"
+	"github.com/server/pkg/logger"
 	"go.uber.org/zap"
 )
 
 func main() {
-	log := logger.Logger(logger.DefaultLoggerConfig())
+	log := logger.GetInstance()
 	cfg, err := configs.Load(log)
 	if err != nil {
 		log.Error("Failed to load config", zap.Error(err))
@@ -26,7 +26,9 @@ func main() {
 
 	defer db.Close()
 
-	if err := db.AutoMigrate(&models.User{}, &models.Test{}, &models.Question{}, &models.Variant{}); err != nil {
+	connPostgres := db.Connection()
+
+	if err := connPostgres.AutoMigrate(&entity.User{}, &entity.Test{}, &entity.Question{}, &entity.Variant{}); err != nil {
 		log.Error("Error migration", zap.Error(err))
 		os.Exit(1)
 	}

@@ -2,11 +2,12 @@ package redis
 
 import (
 	"context"
+	"sync"
 	"time"
 
-	"github.com/MiracleCanCode/example_configuration_logger"
 	"github.com/redis/go-redis/v9"
 	"github.com/server/configs"
+	"github.com/server/pkg/logger"
 )
 
 type RedisInterface interface {
@@ -21,19 +22,26 @@ type Redis struct {
 	client *redis.Client
 }
 
+var (
+	instance *redis.Client
+	once     sync.Once
+)
+
 func New() *Redis {
-	log := logger.Logger(logger.DefaultLoggerConfig())
-	cfg, err := configs.Load(log)
-	if err != nil {
-		return nil
-	}
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     cfg.REDIS_HOST,
-		Password: "",
-		DB:       0,
+	once.Do(func() {
+		log := logger.GetInstance()
+		cfg, err := configs.Load(log)
+		if err != nil {
+			return
+		}
+		instance = redis.NewClient(&redis.Options{
+			Addr:     cfg.REDIS_HOST,
+			Password: "",
+			DB:       0,
+		})
 	})
 	return &Redis{
-		client: rdb,
+		client: instance,
 	}
 }
 

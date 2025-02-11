@@ -3,41 +3,38 @@ package usecases
 import (
 	"errors"
 
-	"github.com/server/internal/models"
+	"github.com/server/entity"
 	"github.com/server/internal/repository"
 	"go.uber.org/zap"
 )
 
 type TestValidatorInterface interface {
-	Validate(test *models.Test) (*float64, error)
+	Validate(test *entity.Test) (*float64, error)
 }
 
 type TestValidator struct {
-	testReader repository.TestManagerReader
-	testWriter repository.TestManagerWriter
-	logger     *zap.Logger
+	testManagerRepo repository.TestManagerInterface
+	logger          *zap.Logger
 }
 
 func NewTestValidator(
-	testReader repository.TestManagerReader,
-	testWriter repository.TestManagerWriter,
+	testManagerRepo repository.TestManagerInterface,
 	logger *zap.Logger,
 ) *TestValidator {
 	return &TestValidator{
-		testReader: testReader,
-		testWriter: testWriter,
-		logger:     logger,
+		testManagerRepo: testManagerRepo,
+		logger:          logger,
 	}
 }
 
-func (s *TestValidator) Validate(test *models.Test) (*float64, error) {
-	exampleTest, err := s.testReader.GetTestById(test.ID)
+func (s *TestValidator) Validate(test *entity.Test) (*float64, error) {
+	exampleTest, err := s.testManagerRepo.GetTestById(test.ID)
 	if err != nil {
 		s.logger.Error("Failed to get test by ID", zap.Error(err))
 		return nil, errors.New("failed to fetch test")
 	}
 
-	err = s.testWriter.IncrementCountUserPast(test.ID, int(exampleTest.CountUserPast))
+	err = s.testManagerRepo.IncrementCountUserPast(test.ID, int(exampleTest.CountUserPast))
 	if err != nil {
 		s.logger.Error("Failed to increment count user past", zap.Error(err))
 		return nil, errors.New("failed to increment count user past")
