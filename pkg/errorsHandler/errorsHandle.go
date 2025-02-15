@@ -1,9 +1,10 @@
 package errorshandler
 
 import (
+	"net/http"
+
 	mapjson "github.com/server/pkg/mapJson"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 type ErrorHandler interface {
@@ -21,7 +22,6 @@ func New(logger *zap.Logger, w http.ResponseWriter, r *http.Request) *DefaultErr
 }
 
 func (s *DefaultErrorHandler) HandleError(message string, code int, err error) {
-	s.logger.Error(message, zap.Error(err), zap.String("method", s.r.Method), zap.String("endpoint", s.r.URL.Path))
 
 	jsonResponse := mapjson.New(s.logger, s.w, s.r)
 	jsonResponse.JsonError(message)

@@ -2,24 +2,27 @@ package cachemanager
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
-	"github.com/server/pkg/db/redis"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
-type CacheManagerInterface interface {
-	Get(key string, out interface{}) error
-	Set(key string, value interface{}, ttl time.Duration)
-	Delete(pattern string) error
+type RedisInterface interface {
+	Get(key string) (string, error)
+	Set(key string, value interface{}, ttl time.Duration) error
+	Del(key string) error
+	Close() error
+	Keys(key string) *redis.StringSliceCmd
 }
 
 type CacheManager struct {
-	rdb    redis.RedisInterface
+	rdb    RedisInterface
 	logger *zap.Logger
 }
 
-func New(rdb redis.RedisInterface, logger *zap.Logger) *CacheManager {
+func New(rdb RedisInterface, logger *zap.Logger) *CacheManager {
 	return &CacheManager{
 		rdb:    rdb,
 		logger: logger,
@@ -37,7 +40,7 @@ func (s *CacheManager) Get(key string, out interface{}) error {
 		if delErr := s.rdb.Del(key); delErr != nil {
 			s.logger.Warn("Failed to delete corrupted cache key", zap.String("key", key), zap.Error(delErr))
 		}
-		return err
+		return fmt.Errorf("Get: %w", err)
 	}
 	return nil
 }
@@ -58,7 +61,7 @@ func (s *CacheManager) Delete(pattern string) error {
 	keys, err := s.rdb.Keys(pattern).Result()
 	if err != nil {
 		s.logger.Error("Failed to get cache keys", zap.Error(err))
-		return err
+		return fmt.Errorf("Delete: %w", err)
 	}
 
 	for _, key := range keys {

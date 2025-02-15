@@ -1,17 +1,12 @@
 package cookiesmanager
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
 	"go.uber.org/zap"
 )
-
-type CookiesManagerInterface interface {
-	Get(name string) (string, error)
-	Set(name string, value string, maxAge time.Duration, httpOnly bool, w http.ResponseWriter)
-	Delete(name string, w http.ResponseWriter)
-}
 
 type CookiesManager struct {
 	r      *http.Request
@@ -29,7 +24,7 @@ func (s *CookiesManager) Get(name string) (string, error) {
 	value, err := s.r.Cookie(name)
 	if err != nil {
 		s.logger.Error("Extract cookie", zap.Error(err))
-		return "", err
+		return "", fmt.Errorf("Get: %w", err)
 	}
 
 	return value.Value, nil

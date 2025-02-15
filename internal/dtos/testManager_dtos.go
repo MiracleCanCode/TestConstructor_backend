@@ -2,8 +2,8 @@ package dtos
 
 import "github.com/server/entity"
 
-func MapTestModelToGetTestByIdResponse(req *entity.Test, userRole string, userId uint) *GetTestByIdResponse {
-	return &GetTestByIdResponse{
+func MapTestModelToGetTestByIdResponse(req *entity.Test, userRole string, userId uint) GetTestByIdResponse {
+	return GetTestByIdResponse{
 		Test: entity.Test{
 			Name:      req.Name,
 			UserID:    userId,
@@ -13,8 +13,8 @@ func MapTestModelToGetTestByIdResponse(req *entity.Test, userRole string, userId
 	}
 }
 
-func MapCreateTestRequestToModel(req *CreateTestRequest, userId uint) *entity.Test {
-	test := &entity.Test{
+func MapCreateTestRequestToModel(req *CreateTestRequest, userId uint) entity.Test {
+	test := entity.Test{
 		Name:      req.Name,
 		UserID:    userId,
 		Questions: mapQuestions(req.Questions),

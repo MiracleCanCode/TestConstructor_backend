@@ -1,14 +1,12 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/server/entity"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
-
-type AuthInterface interface {
-	SaveRefreshToken(login string, token string) error
-}
 
 type Auth struct {
 	db     *gorm.DB
@@ -25,7 +23,7 @@ func NewAuth(db *gorm.DB, logger *zap.Logger) *Auth {
 func (s *Auth) SaveRefreshToken(login string, refreshToken string) error {
 	user := &entity.User{}
 	if err := s.db.Model(user).Where("login = ?", login).Update("refresh_token", refreshToken).Error; err != nil {
-		return err
+		return fmt.Errorf("SaveRefreshToken: failed to update user data: %w", err)
 	}
 	return nil
 }

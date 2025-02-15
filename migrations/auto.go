@@ -5,8 +5,8 @@ import (
 
 	"github.com/server/configs"
 	"github.com/server/entity"
-	"github.com/server/pkg/db/postgresql"
 	"github.com/server/pkg/logger"
+	"github.com/server/pkg/storage/postgresql"
 	"go.uber.org/zap"
 )
 
@@ -23,8 +23,6 @@ func main() {
 		log.Error("Failed to open db", zap.Error(err))
 		os.Exit(1)
 	}
-
-	defer db.Close()
 
 	connPostgres := db.Connection()
 

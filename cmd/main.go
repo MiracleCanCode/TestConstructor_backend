@@ -2,9 +2,10 @@ package main
 
 import (
 	"github.com/server/configs"
-	"github.com/server/pkg/db/postgresql"
+	"github.com/server/internal/transport"
 	"github.com/server/pkg/logger"
-	"github.com/server/pkg/server"
+
+	"github.com/server/pkg/storage/postgresql"
 	"go.uber.org/zap"
 )
 
@@ -24,7 +25,7 @@ func main() {
 	defer db.Close()
 	connPostgres := db.Connection()
 
-	app := server.New(connPostgres, log, conf)
+	app := transport.New(connPostgres, log, conf)
 
 	if err := app.RunApp(); err != nil {
 		log.Error("Failed to run server", zap.Error(err))

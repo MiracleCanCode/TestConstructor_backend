@@ -7,29 +7,33 @@ import (
 
 	"github.com/server/entity"
 	"github.com/server/internal/dtos"
-	"github.com/server/internal/repository"
-	cachemanager "github.com/server/pkg/cacheManager"
 	cookiesmanager "github.com/server/pkg/cookiesManager"
 	"github.com/server/pkg/jwt"
 	"go.uber.org/zap"
 )
 
-type UserInterface interface {
-	FindUserByLogin(login string) (*entity.User, error)
-	UpdateUserData(user dtos.UpdateUserRequest) error
-	Logout(w http.ResponseWriter, r *http.Request) error
+type CacheManagerV2Interface interface {
+	Get(key string, out interface{}) error
+	Set(key string, value interface{}, ttl time.Duration)
+	Delete(pattern string) error
+}
+
+type UserRepoInterfaceReaderAndWriter interface {
+	GetUserByLogin(login string) (*entity.User, error)
+	UpdateUser(user *dtos.UpdateUserRequest) error
+	DeleteRefreshToken(login string) error
 }
 
 type User struct {
-	userRepo     repository.UserInterface
+	userRepo     UserRepoInterfaceReaderAndWriter
 	logger       *zap.Logger
-	cacheManager cachemanager.CacheManagerInterface
+	cacheManager CacheManagerV2Interface
 }
 
 func NewUser(
-	userRepo repository.UserInterface,
+	userRepo UserRepoInterfaceReaderAndWriter,
 	logger *zap.Logger,
-	cacheManager cachemanager.CacheManagerInterface,
+	cacheManager CacheManagerV2Interface,
 ) *User {
 	return &User{
 		userRepo:     userRepo,
@@ -48,7 +52,7 @@ func (s *User) FindUserByLogin(login string) (*entity.User, error) {
 
 	user, err := s.userRepo.GetUserByLogin(login)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("FindUserByLogin: failed to find user by login: %w", err)
 	}
 
 	s.cacheManager.Set(cacheKey, user, 10*time.Minute)
@@ -60,7 +64,7 @@ func (s *User) UpdateUserData(user dtos.UpdateUserRequest) error {
 	cacheKey := fmt.Sprintf("user:login:%s", user.UserLogin)
 
 	if err := s.cacheManager.Delete(cacheKey); err != nil {
-		return err
+		return fmt.Errorf("UpdateUserData: failed delete user from cache: %w", err)
 	}
 
 	return s.userRepo.UpdateUser(&user)
@@ -71,13 +75,11 @@ func (s *User) Logout(w http.ResponseWriter, r *http.Request) error {
 	jwt := jwt.NewJwt(s.logger)
 	login, err := jwt.ExtractUserFromToken(r)
 	if err != nil {
-		s.logger.Error("Extract user login from token", zap.Error(err))
-		return err
+		return fmt.Errorf("Logout: failed extract user login from token: %w", err)
 	}
 	cookies.Delete("token", w)
 	if err := s.userRepo.DeleteRefreshToken(login); err != nil {
-		s.logger.Error("Delete refresh token", zap.Error(err))
-		return err
+		return fmt.Errorf("Logout: failed delete refresh token: %w", err)
 	}
 
 	return nil

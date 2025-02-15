@@ -2,6 +2,7 @@ package json
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/server/pkg/validation"
@@ -26,7 +27,7 @@ func (s *DecodeAndEncodeJson) Decode(payload any) error {
 	if err := json.NewDecoder(s.r.Body).Decode(&payload); err != nil {
 		s.logger.Error("Failed to decode login data", zap.Error(err))
 		http.Error(s.w, "Invalid request body", http.StatusBadRequest)
-		return err
+		return fmt.Errorf("Decode: %w", err)
 	}
 
 	return nil
@@ -37,7 +38,7 @@ func (s *DecodeAndEncodeJson) Encode(code int, data any) error {
 	s.w.WriteHeader(code)
 	if err := json.NewEncoder(s.w).Encode(data); err != nil {
 		http.Error(s.w, "Failed to encode response", http.StatusInternalServerError)
-		return err
+		return fmt.Errorf("Encode: %w", err)
 	}
 
 	return nil
@@ -51,7 +52,7 @@ func (s *DecodeAndEncodeJson) DecodeAndValidationBody(payload any) error {
 	if err := validation.Validation(payload); err != nil {
 		s.logger.Error("Validation failed", zap.Error(err))
 		http.Error(s.w, "Validation error: "+err.Error(), http.StatusBadRequest)
-		return err
+		return fmt.Errorf("DecodeAndValidationBody: %w", err)
 	}
 
 	return nil

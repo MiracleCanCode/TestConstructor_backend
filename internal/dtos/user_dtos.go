@@ -2,8 +2,8 @@ package dtos
 
 import "github.com/server/entity"
 
-func ToGetUserByLoginResponse(user *entity.User) *GetUserByLoginResponse {
-	return &GetUserByLoginResponse{
+func ToGetUserByLoginResponse(user *entity.User) GetUserByLoginResponse {
+	return GetUserByLoginResponse{
 		Login:  user.Login,
 		Name:   user.Name,
 		Avatar: user.Avatar,

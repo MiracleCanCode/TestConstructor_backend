@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -10,15 +11,6 @@ import (
 	cookiesmanager "github.com/server/pkg/cookiesManager"
 	"go.uber.org/zap"
 )
-
-type JWTInterface interface {
-	createToken(login string, duration time.Duration) (string, error)
-	CreateAccessToken(login string) (string, error)
-	CreateRefreshToken(login string) (string, error)
-	VerifyToken(tokenString string) (*jwt.Token, jwt.MapClaims, error)
-	ExtractUserFromToken(r *http.Request) (string, error)
-	RefreshAccessToken(refreshToken string) (string, error)
-}
 
 type JWT struct {
 	Secret string
@@ -63,7 +55,7 @@ func (s *JWT) VerifyToken(tokenString string) (*jwt.Token, jwt.MapClaims, error)
 	})
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("VerifyToken: %w", err)
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
@@ -82,11 +74,11 @@ func (s *JWT) ExtractUserFromToken(r *http.Request) (string, error) {
 	}
 	_, claims, err := s.VerifyToken(authToken)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("ExtractUserFromToken: %w", err)
 	}
 	userLogin, ok := claims["login"].(string)
 	if !ok {
-		return "", errors.New("invalid login claim type")
+		return "", fmt.Errorf("ExtractUserFromToken: %w", err)
 	}
 
 	return userLogin, nil
@@ -95,12 +87,12 @@ func (s *JWT) ExtractUserFromToken(r *http.Request) (string, error) {
 func (s *JWT) RefreshAccessToken(refreshToken string) (string, error) {
 	_, claims, err := s.VerifyToken(refreshToken)
 	if err != nil {
-		return "", errors.New("invalid refresh token")
+		return "", fmt.Errorf("RefreshAccessToken: %w", err)
 	}
 
 	userLogin, ok := claims["login"].(string)
 	if !ok {
-		return "", errors.New("invalid login claim type")
+		return "", fmt.Errorf("RefreshAccessToken: %w", err)
 	}
 
 	return s.CreateAccessToken(userLogin)

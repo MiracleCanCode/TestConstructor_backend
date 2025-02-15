@@ -1,24 +1,24 @@
 package usecases
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/server/entity"
-	"github.com/server/internal/repository"
 	"go.uber.org/zap"
 )
 
-type TestValidatorInterface interface {
-	Validate(test *entity.Test) (*float64, error)
+type TestManagerRepoV2Interface interface {
+	GetTestById(id uint) (*entity.Test, error)
+	IncrementCountUserPast(testId uint, count int) error
 }
 
 type TestValidator struct {
-	testManagerRepo repository.TestManagerInterface
+	testManagerRepo TestManagerRepoV2Interface
 	logger          *zap.Logger
 }
 
 func NewTestValidator(
-	testManagerRepo repository.TestManagerInterface,
+	testManagerRepo TestManagerRepoV2Interface,
 	logger *zap.Logger,
 ) *TestValidator {
 	return &TestValidator{
@@ -30,14 +30,12 @@ func NewTestValidator(
 func (s *TestValidator) Validate(test *entity.Test) (*float64, error) {
 	exampleTest, err := s.testManagerRepo.GetTestById(test.ID)
 	if err != nil {
-		s.logger.Error("Failed to get test by ID", zap.Error(err))
-		return nil, errors.New("failed to fetch test")
+		return nil, fmt.Errorf("Validate: failed to get test by ID: %w", err)
 	}
 
 	err = s.testManagerRepo.IncrementCountUserPast(test.ID, int(exampleTest.CountUserPast))
 	if err != nil {
-		s.logger.Error("Failed to increment count user past", zap.Error(err))
-		return nil, errors.New("failed to increment count user past")
+		return nil, fmt.Errorf("Validate: failed to increment count user past: %w", err)
 	}
 
 	var (
