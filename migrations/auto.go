@@ -3,10 +3,10 @@ package main
 import (
 	"os"
 
+	"github.com/server/adapters/storage/postgresql"
 	"github.com/server/configs"
 	"github.com/server/entity"
 	"github.com/server/pkg/logger"
-	"github.com/server/pkg/storage/postgresql"
 	"go.uber.org/zap"
 )
 

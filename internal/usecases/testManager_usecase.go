@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/server/adapters/storage/redis"
 	"github.com/server/entity"
 	cachemanager "github.com/server/pkg/cacheManager"
 	"github.com/server/pkg/constants"
-	"github.com/server/pkg/storage/redis"
 	"go.uber.org/zap"
 )
 
@@ -33,7 +33,6 @@ type UserRepoInterfaceGetByLogin interface {
 type TestManager struct {
 	testRepo     TestManagerRepoInterface
 	userRepo     UserRepoInterfaceGetByLogin
-	logger       *zap.Logger
 	cacheManager CacheManagerInterface
 }
 
@@ -47,7 +46,6 @@ func NewTestManager(
 	return &TestManager{
 		testRepo:     testRepo,
 		userRepo:     userRepo,
-		logger:       logger,
 		cacheManager: cacheManager,
 	}
 }

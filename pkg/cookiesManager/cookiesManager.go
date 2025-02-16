@@ -23,8 +23,7 @@ func New(r *http.Request, logger *zap.Logger) *CookiesManager {
 func (s *CookiesManager) Get(name string) (string, error) {
 	value, err := s.r.Cookie(name)
 	if err != nil {
-		s.logger.Error("Extract cookie", zap.Error(err))
-		return "", fmt.Errorf("Get: %w", err)
+		return "", fmt.Errorf("Get: failed get cookie: %w", err)
 	}
 
 	return value.Value, nil

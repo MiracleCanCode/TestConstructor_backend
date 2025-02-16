@@ -5,7 +5,7 @@ import (
 	"github.com/server/internal/transport"
 	"github.com/server/pkg/logger"
 
-	"github.com/server/pkg/storage/postgresql"
+	"github.com/server/adapters/storage/postgresql"
 	"go.uber.org/zap"
 )
 

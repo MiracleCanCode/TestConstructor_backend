@@ -26,18 +26,15 @@ type UserRepoInterfaceReaderAndWriter interface {
 
 type User struct {
 	userRepo     UserRepoInterfaceReaderAndWriter
-	logger       *zap.Logger
 	cacheManager CacheManagerV2Interface
 }
 
 func NewUser(
 	userRepo UserRepoInterfaceReaderAndWriter,
-	logger *zap.Logger,
 	cacheManager CacheManagerV2Interface,
 ) *User {
 	return &User{
 		userRepo:     userRepo,
-		logger:       logger,
 		cacheManager: cacheManager,
 	}
 }
@@ -70,9 +67,9 @@ func (s *User) UpdateUserData(user dtos.UpdateUserRequest) error {
 	return s.userRepo.UpdateUser(&user)
 }
 
-func (s *User) Logout(w http.ResponseWriter, r *http.Request) error {
-	cookies := cookiesmanager.New(r, s.logger)
-	jwt := jwt.NewJwt(s.logger)
+func (s *User) Logout(w http.ResponseWriter, r *http.Request, logger *zap.Logger) error {
+	cookies := cookiesmanager.New(r, logger)
+	jwt := jwt.NewJwt(logger)
 	login, err := jwt.ExtractUserFromToken(r)
 	if err != nil {
 		return fmt.Errorf("Logout: failed extract user login from token: %w", err)

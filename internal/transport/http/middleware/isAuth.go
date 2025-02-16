@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/server/adapters/storage/postgresql"
 	"github.com/server/configs"
 	"github.com/server/internal/repository"
 	cookiesmanager "github.com/server/pkg/cookiesManager"
 	"github.com/server/pkg/jwt"
 	"github.com/server/pkg/logger"
-	"github.com/server/pkg/storage/postgresql"
 	"go.uber.org/zap"
 )
 

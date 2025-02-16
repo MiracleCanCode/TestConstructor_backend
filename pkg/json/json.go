@@ -25,9 +25,7 @@ func New(r *http.Request, log *zap.Logger, w http.ResponseWriter) *DecodeAndEnco
 
 func (s *DecodeAndEncodeJson) Decode(payload any) error {
 	if err := json.NewDecoder(s.r.Body).Decode(&payload); err != nil {
-		s.logger.Error("Failed to decode login data", zap.Error(err))
-		http.Error(s.w, "Invalid request body", http.StatusBadRequest)
-		return fmt.Errorf("Decode: %w", err)
+		return fmt.Errorf("Decode: failed decode request body: %w", err)
 	}
 
 	return nil
@@ -37,8 +35,7 @@ func (s *DecodeAndEncodeJson) Encode(code int, data any) error {
 	s.w.Header().Set("Content-Type", "application/json")
 	s.w.WriteHeader(code)
 	if err := json.NewEncoder(s.w).Encode(data); err != nil {
-		http.Error(s.w, "Failed to encode response", http.StatusInternalServerError)
-		return fmt.Errorf("Encode: %w", err)
+		return fmt.Errorf("Encode: failed to encode response body: %w", err)
 	}
 
 	return nil
@@ -46,13 +43,11 @@ func (s *DecodeAndEncodeJson) Encode(code int, data any) error {
 
 func (s *DecodeAndEncodeJson) DecodeAndValidationBody(payload any) error {
 	if err := s.Decode(payload); err != nil {
-		return err
+		return fmt.Errorf("DecodeAndValidationBody: failed to decode request body: %w", err)
 	}
 
 	if err := validation.Validation(payload); err != nil {
-		s.logger.Error("Validation failed", zap.Error(err))
-		http.Error(s.w, "Validation error: "+err.Error(), http.StatusBadRequest)
-		return fmt.Errorf("DecodeAndValidationBody: %w", err)
+		return fmt.Errorf("DecodeAndValidationBody: failed to validation request body: %w", err)
 	}
 
 	return nil
@@ -60,5 +55,10 @@ func (s *DecodeAndEncodeJson) DecodeAndValidationBody(payload any) error {
 
 func (s *DecodeAndEncodeJson) Marshall(payload any) ([]byte, error) {
 	s.w.Header().Set("Content-Type", "application/json")
-	return json.Marshal(payload)
+	result, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("Marshall: failed to json marshall: %w", err)
+	}
+
+	return result, nil
 }

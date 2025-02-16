@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/server/adapters/storage/redis"
 	"github.com/server/configs"
 	"github.com/server/entity"
 	"github.com/server/internal/dtos"
@@ -16,7 +17,6 @@ import (
 	errorshandler "github.com/server/pkg/errorsHandler"
 	"github.com/server/pkg/json"
 	"github.com/server/pkg/jwt"
-	"github.com/server/pkg/storage/redis"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
@@ -37,7 +37,7 @@ type UserRepoInterfaceV2 interface {
 
 type UserUseCaseInterface interface {
 	UpdateUserData(user dtos.UpdateUserRequest) error
-	Logout(w http.ResponseWriter, r *http.Request) error
+	Logout(w http.ResponseWriter, r *http.Request, logger *zap.Logger) error
 	FindUserByLogin(login string) (*entity.User, error)
 }
 
@@ -55,7 +55,7 @@ func NewUserHandler(logger *zap.Logger, db *gorm.DB, router *mux.Router, cfg *co
 	repo := repository.NewUser(db, logger)
 	rdb := redis.New()
 	cache := cachemanager.New(rdb, logger)
-	usecase := usecases.NewUser(repo, logger, cache)
+	usecase := usecases.NewUser(repo, cache)
 	handler := &User{
 		logger:     logger,
 		db:         db,
@@ -165,7 +165,7 @@ func (s *User) Logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 
-		if err := s.usecase.Logout(w, r); err != nil {
+		if err := s.usecase.Logout(w, r, s.logger); err != nil {
 			s.logger.Error("Logout: failed logout", zap.Error(err))
 			w.WriteHeader(http.StatusBadRequest)
 			return

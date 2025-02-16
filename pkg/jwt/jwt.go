@@ -1,7 +1,6 @@
 package jwt
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -20,7 +19,6 @@ type JWT struct {
 func NewJwt(logger *zap.Logger) *JWT {
 	cfg, err := configs.Load(logger)
 	if err != nil {
-		logger.Error("Failed to load config", zap.Error(err))
 		return nil
 	}
 	return &JWT{
@@ -39,11 +37,19 @@ func (s *JWT) createToken(login string, duration time.Duration) (string, error) 
 }
 
 func (s *JWT) CreateAccessToken(login string) (string, error) {
-	return s.createToken(login, time.Hour*24)
+	token, err := s.createToken(login, time.Hour*24)
+	if err != nil {
+		return "", fmt.Errorf("CreateAccessToken: failed to create access token: %w", err)
+	}
+	return token, nil
 }
 
 func (s *JWT) CreateRefreshToken(login string) (string, error) {
-	return s.createToken(login, time.Hour*24*7)
+	token, err := s.createToken(login, time.Hour*24*7)
+	if err != nil {
+		return "", fmt.Errorf("CreateRefreshToken: failed to create refresh token: %w", err)
+	}
+	return token, nil
 }
 
 func (s *JWT) VerifyToken(tokenString string) (*jwt.Token, jwt.MapClaims, error) {
@@ -55,7 +61,7 @@ func (s *JWT) VerifyToken(tokenString string) (*jwt.Token, jwt.MapClaims, error)
 	})
 
 	if err != nil {
-		return nil, nil, fmt.Errorf("VerifyToken: %w", err)
+		return nil, nil, fmt.Errorf("VerifyToken: failed verify auth token: %w", err)
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
@@ -70,15 +76,16 @@ func (s *JWT) ExtractUserFromToken(r *http.Request) (string, error) {
 	cookie := cookiesmanager.New(r, s.logger)
 	authToken, err := cookie.Get("token")
 	if err != nil {
-		return "", errors.New("failed extract token from cookie")
+		return "", fmt.Errorf("ExtractUserFromToken: failed extract token from cookie: %w", err)
 	}
 	_, claims, err := s.VerifyToken(authToken)
 	if err != nil {
-		return "", fmt.Errorf("ExtractUserFromToken: %w", err)
+		return "", fmt.Errorf("ExtractUserFromToken: failed verify auth token: %w", err)
 	}
+
 	userLogin, ok := claims["login"].(string)
 	if !ok {
-		return "", fmt.Errorf("ExtractUserFromToken: %w", err)
+		return "", fmt.Errorf("ExtractUserFromToken: failed get login from claims: %w", err)
 	}
 
 	return userLogin, nil
@@ -87,12 +94,12 @@ func (s *JWT) ExtractUserFromToken(r *http.Request) (string, error) {
 func (s *JWT) RefreshAccessToken(refreshToken string) (string, error) {
 	_, claims, err := s.VerifyToken(refreshToken)
 	if err != nil {
-		return "", fmt.Errorf("RefreshAccessToken: %w", err)
+		return "", fmt.Errorf("RefreshAccessToken: failed verify refresh token: %w", err)
 	}
 
 	userLogin, ok := claims["login"].(string)
 	if !ok {
-		return "", fmt.Errorf("RefreshAccessToken: %w", err)
+		return "", fmt.Errorf("RefreshAccessToken: failed get login from claims: %w", err)
 	}
 
 	return s.CreateAccessToken(userLogin)

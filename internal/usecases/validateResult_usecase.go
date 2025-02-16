@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/server/entity"
-	"go.uber.org/zap"
 )
 
 type TestManagerRepoV2Interface interface {
@@ -14,16 +13,14 @@ type TestManagerRepoV2Interface interface {
 
 type TestValidator struct {
 	testManagerRepo TestManagerRepoV2Interface
-	logger          *zap.Logger
 }
 
 func NewTestValidator(
 	testManagerRepo TestManagerRepoV2Interface,
-	logger *zap.Logger,
+
 ) *TestValidator {
 	return &TestValidator{
 		testManagerRepo: testManagerRepo,
-		logger:          logger,
 	}
 }
 
@@ -63,7 +60,6 @@ func (s *TestValidator) Validate(test *entity.Test) (*float64, error) {
 	}
 
 	if totalAnswers == 0 {
-		s.logger.Warn("No answers provided")
 		return nil, nil
 	}
 

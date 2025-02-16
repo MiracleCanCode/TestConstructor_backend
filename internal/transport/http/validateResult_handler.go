@@ -35,7 +35,7 @@ func NewValidateResultHandler(db *gorm.DB, router *mux.Router, logger *zap.Logge
 		db:      db,
 		router:  router,
 		logger:  logger,
-		service: usecases.NewTestValidator(testManagerRepo, logger),
+		service: usecases.NewTestValidator(testManagerRepo),
 	}
 
 	handler.router.HandleFunc("/api/test/validate", middleware.IsAuth(handler.ValidateResult())).Methods(http.MethodPost)
