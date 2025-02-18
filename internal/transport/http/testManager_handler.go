@@ -62,7 +62,7 @@ func (s *TestManagerHandler) GetAll() http.HandlerFunc {
 		var payload dtos.GetAllTestsRequest
 		decoderAndEncoder := json.New(r, s.logger, w)
 
-		if err := decoderAndEncoder.DecodeAndValidationBody(&payload); err != nil {
+		if err := decoderAndEncoder.Decode(&payload); err != nil {
 			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
@@ -109,7 +109,7 @@ func (s *TestManagerHandler) GetTestById() http.HandlerFunc {
 			return
 		}
 
-		res := dtos.MapTestModelToGetTestByIdResponse(getTest, role, getTest.UserID)
+		res := dtos.MapTestToGetTestResponse(getTest, role, getTest.UserID)
 		if err := decoderAndEncoder.Encode(http.StatusOK, res); err != nil {
 			s.logger.Error("GetTestById: failed encode response body", zap.Error(err))
 			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
@@ -127,7 +127,7 @@ func (s *TestManagerHandler) CreateTest() http.HandlerFunc {
 		var payload dtos.CreateTestRequest
 		json := json.New(r, s.logger, w)
 
-		if err := json.DecodeAndValidationBody(&payload); err != nil {
+		if err := json.Decode(&payload); err != nil {
 			s.logger.Error("CreateTest: failed decode request body", zap.Error(err))
 			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
@@ -202,7 +202,7 @@ func (s *TestManagerHandler) ChangeActiveTestStatus() http.HandlerFunc {
 			return
 		}
 
-		if err := json.DecodeAndValidationBody(&payload); err != nil {
+		if err := json.Decode(&payload); err != nil {
 			s.logger.Error("ChangeActiveTestStatus: failed decode request body", zap.Error(err))
 			errors.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return

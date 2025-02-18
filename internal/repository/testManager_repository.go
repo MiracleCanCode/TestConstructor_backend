@@ -47,7 +47,7 @@ func (s *TestManager) GetTestById(id uint) (*entity.Test, error) {
 }
 
 func (s *TestManager) CreateTest(data *entity.Test) error {
-	if err := s.db.Create(data).Error; err != nil {
+	if err := s.db.Create(&data).Error; err != nil {
 		return fmt.Errorf("CreateTest: failed to create test: %w", err)
 	}
 	return nil

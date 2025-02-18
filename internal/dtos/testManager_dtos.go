@@ -2,14 +2,60 @@ package dtos
 
 import "github.com/server/entity"
 
-func MapTestModelToGetTestByIdResponse(req *entity.Test, userRole string, userId uint) GetTestByIdResponse {
-	return GetTestByIdResponse{
-		Test: entity.Test{
-			Name:      req.Name,
-			UserID:    userId,
-			Questions: mapQuestionsGetTestById(req.Questions),
-		},
-		Role: userRole,
+type GetTestResponse struct {
+	ID            uint
+	Name          string                `json:"name"`
+	AuthorLogin   string                `json:"author_login"`
+	UserID        uint                  `json:"user_id"`
+	IsActive      bool                  `json:"is_active"`
+	CountUserPast uint                  `json:"count_user_past"`
+	Questions     []GetQuestionResponse `json:"questions"`
+	Role          string                `json:"user_role"`
+}
+
+type GetQuestionResponse struct {
+	ID          uint
+	Name        string               `json:"name"`
+	Description string               `json:"description"`
+	Variants    []GetVariantResponse `json:"variants"`
+}
+
+type GetVariantResponse struct {
+	ID        uint
+	Name      string `json:"name"`
+	IsCorrect bool   `json:"is_correct"`
+}
+
+func MapTestToGetTestResponse(test *entity.Test, role string, userID uint) *GetTestResponse {
+	questions := make([]GetQuestionResponse, len(test.Questions))
+
+	for i, question := range test.Questions {
+		variants := make([]GetVariantResponse, len(question.Variants))
+		for j, variant := range question.Variants {
+			variants[j] = GetVariantResponse{
+				ID:        variant.ID,
+				Name:      variant.Name,
+				IsCorrect: variant.IsCorrect,
+			}
+		}
+
+		questions[i] = GetQuestionResponse{
+			ID:          question.ID,
+			Name:        question.Name,
+			Description: question.Description,
+			Variants:    variants,
+		}
+	}
+
+	return &GetTestResponse{
+		ID:            test.ID,
+		Name:          test.Name,
+		AuthorLogin:   test.AuthorLogin,
+		UserID:        userID,
+		IsActive:      test.IsActive,
+		CountUserPast: test.CountUserPast,
+		Questions:     questions,
+		Role:          role,
 	}
 }
 
@@ -98,7 +144,7 @@ type GetAllTestsResponse struct {
 }
 
 type GetTestByIdResponse struct {
-	entity.Test
+	*entity.Test
 	Role string `json:"user_role"`
 }
 

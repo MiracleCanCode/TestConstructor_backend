@@ -113,7 +113,7 @@ func (s *User) UpdateUser() http.HandlerFunc {
 		errorHandler := errorshandler.New(s.logger, w, r)
 		json := json.New(r, s.logger, w)
 
-		if err := json.DecodeAndValidationBody(&payload); err != nil {
+		if err := json.Decode(&payload); err != nil {
 			s.logger.Error("UpdateUser: failed decode and validation request body", zap.Error(err))
 			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
@@ -138,7 +138,7 @@ func (s *User) GetUserByLogin() http.HandlerFunc {
 		errorHandler := errorshandler.New(s.logger, w, r)
 		json := json.New(r, s.logger, w)
 
-		if err := json.DecodeAndValidationBody(&payload); err != nil {
+		if err := json.Decode(&payload); err != nil {
 			s.logger.Error("GetUserByLogin: failed decode and validation body", zap.Error(err))
 			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
