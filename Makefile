@@ -26,12 +26,6 @@ container-run:
 run:
 	$(GO) run $(SRC_DIR)
 
-test:
-	$(GO) test $(GOFLAGS) ./...
-
-benchmark:
-	$(GO) test -benchmem -bench .
-
 deps:
 	$(GO) mod tidy
 

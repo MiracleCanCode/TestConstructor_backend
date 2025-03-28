@@ -13,7 +13,7 @@ import (
 
 type CacheManagerInterface interface {
 	Get(key string, out interface{}) error
-	Set(key string, value interface{}, ttl time.Duration)
+	Set(key string, value interface{}, ttl time.Duration) error
 	Delete(pattern string) error
 }
 
@@ -42,7 +42,7 @@ func NewTestManager(
 	logger *zap.Logger,
 ) *TestManager {
 	rdb := redis.New()
-	cacheManager := cachemanager.New(rdb, logger)
+	cacheManager := cachemanager.New(rdb)
 	return &TestManager{
 		testRepo:     testRepo,
 		userRepo:     userRepo,
@@ -63,13 +63,15 @@ func (s *TestManager) GetAllTests(userID uint, limit, offset int) ([]entity.Test
 
 	tests, count, err := s.testRepo.GetAllTests(userID, offset, limit)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("GetAllTests: failed get tests: %w", err)
 	}
 
-	s.cacheManager.Set(cacheKey, map[string]interface{}{
+	if err := s.cacheManager.Set(cacheKey, map[string]interface{}{
 		"tests": tests,
 		"count": count,
-	}, 10*time.Minute)
+	}, constants.CACHE_HEALTH_TIME); err != nil {
+		return nil, 0, fmt.Errorf("GetAllTests: failed set tests for redis: %w", err)
+	}
 
 	return tests, count, nil
 }
@@ -96,11 +98,13 @@ func (s *TestManager) GetTestById(id uint, userLogin string) (*entity.Test, stri
 	}
 
 	if !test.IsActive && user.ID != test.UserID {
-		return nil, "", fmt.Errorf("GetTestById: %w", err)
+		return nil, "", fmt.Errorf("GetTestById: test is private")
 	}
 
 	if test.IsActive || user.ID == test.UserID {
-		s.cacheManager.Set(cacheKey, test, 10*time.Minute)
+		if err := s.cacheManager.Set(cacheKey, test, constants.CACHE_HEALTH_TIME); err != nil {
+			return nil, "", fmt.Errorf("GetTestById: failed set test to redis storage: %w", err)
+		}
 	}
 
 	if user.ID != test.UserID {
@@ -141,7 +145,10 @@ func (s *TestManager) DeleteTest(id uint, login string) error {
 		return fmt.Errorf("DeleteTest: failed to delete test: %w", err)
 	}
 
-	return s.testRepo.DeleteTest(id)
+	if err := s.testRepo.DeleteTest(id); err != nil {
+		return fmt.Errorf("DeleteTest: failed delete test by id: %w", err)
+	}
+	return nil
 }
 
 func (s *TestManager) ChangeActiveStatus(status bool, testId uint, userLogin string) error {
@@ -167,7 +174,10 @@ func (s *TestManager) ChangeActiveStatus(status bool, testId uint, userLogin str
 		return fmt.Errorf("ChangeActiveStatus: failed to delete tests from cache: %w", err)
 	}
 
-	return s.testRepo.ChangeActiveStatus(status, testId)
+	if err := s.testRepo.ChangeActiveStatus(status, testId); err != nil {
+		return fmt.Errorf("ChangeActiveStatus: failed change test active status: %w", err)
+	}
+	return nil
 }
 
 func (s *TestManager) deleteTestFromCache(testId uint) error {

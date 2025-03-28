@@ -1,12 +1,42 @@
 services:
   server:
     restart: always
+    container_name: server_test_constructor
     build:
       context: ..
       dockerfile: ./deployments/Dockerfile
-    image: myapp.latest
     ports:
       - 8080:8080
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - mynetwork
+    env_file:
+      - ../.env.production
+  server_two:
+    restart: always
+    container_name: server_test_constructor_two
+    build:
+      context: ..
+      dockerfile: ./deployments/Dockerfile
+    ports:
+      - 8081:8081
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - mynetwork
+    env_file:
+      - ../.env.production
+  server_three:
+    restart: always
+    container_name: server_test_constructor_three
+    build:
+      context: ..
+      dockerfile: ./deployments/Dockerfile
+    ports:
+      - 8082:8082
     depends_on:
       - postgres
       - redis
@@ -65,6 +95,8 @@ services:
       - "3000:3000"
     networks:
       - mynetwork
+    volumes:
+      - ./grafana-data:/var/lib/grafana
 
   redis:
     container_name: redis-service
@@ -73,6 +105,8 @@ services:
       - "6379:6379"
     networks:
       - mynetwork
+    volumes:
+      - ./redis-data:/data
 
 
 networks:

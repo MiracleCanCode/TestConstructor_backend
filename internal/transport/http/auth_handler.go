@@ -40,8 +40,8 @@ func NewAuthHandler(router *mux.Router, logger *zap.Logger, db *gorm.DB, cfg *co
 		authUsecase: authUsecase,
 	}
 
-	router.HandleFunc("/api/auth/login", handler.Login()).Methods(http.MethodPost)
-	router.HandleFunc("/api/auth/registration", handler.Registration()).Methods(http.MethodPost)
+	router.HandleFunc("/auth/login", handler.Login()).Methods(http.MethodPost)
+	router.HandleFunc("/auth/registration", handler.Registration()).Methods(http.MethodPost)
 }
 
 func (h *AuthHandler) Login() http.HandlerFunc {

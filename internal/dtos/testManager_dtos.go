@@ -21,9 +21,8 @@ type GetQuestionResponse struct {
 }
 
 type GetVariantResponse struct {
-	ID        uint
-	Name      string `json:"name"`
-	IsCorrect bool   `json:"is_correct"`
+	ID   uint
+	Name string `json:"name"`
 }
 
 func MapTestToGetTestResponse(test *entity.Test, role string, userID uint) *GetTestResponse {
@@ -33,9 +32,8 @@ func MapTestToGetTestResponse(test *entity.Test, role string, userID uint) *GetT
 		variants := make([]GetVariantResponse, len(question.Variants))
 		for j, variant := range question.Variants {
 			variants[j] = GetVariantResponse{
-				ID:        variant.ID,
-				Name:      variant.Name,
-				IsCorrect: variant.IsCorrect,
+				ID:   variant.ID,
+				Name: variant.Name,
 			}
 		}
 

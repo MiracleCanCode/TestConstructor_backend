@@ -2,11 +2,11 @@ package middleware
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/server/adapters/storage/postgresql"
 	"github.com/server/configs"
 	"github.com/server/internal/repository"
+	"github.com/server/pkg/constants"
 	cookiesmanager "github.com/server/pkg/cookiesManager"
 	"github.com/server/pkg/jwt"
 	"github.com/server/pkg/logger"
@@ -68,7 +68,7 @@ func IsAuth(next http.Handler) http.HandlerFunc {
 			return
 		}
 
-		cookie.Set("token", accessToken, time.Minute*15, true, w)
+		cookie.Set("token", accessToken, constants.CACHE_HEALTH_TIME, true, w)
 
 		next.ServeHTTP(w, r)
 	}

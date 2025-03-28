@@ -48,11 +48,11 @@ func NewTestManagerHandler(logger *zap.Logger, db *gorm.DB, router *mux.Router) 
 		userRepo: userRepo,
 	}
 
-	router.HandleFunc("/api/test/getById/{id}", middleware.IsAuth(handler.GetTestById())).Methods(http.MethodGet)
-	router.HandleFunc("/api/test/getAll", middleware.IsAuth(handler.GetAll())).Methods(http.MethodPost)
-	router.HandleFunc("/api/test/create", middleware.IsAuth(handler.CreateTest())).Methods(http.MethodPost)
-	router.HandleFunc("/api/test/delete/{id}", middleware.IsAuth(handler.DeleteTest())).Methods(http.MethodDelete)
-	router.HandleFunc("/api/test/changeActive", middleware.IsAuth(handler.ChangeActiveTestStatus())).Methods(http.MethodPut)
+	router.HandleFunc("/test/getById/{id}", middleware.IsAuth(handler.GetTestById())).Methods(http.MethodGet)
+	router.HandleFunc("/test/getAll", middleware.IsAuth(handler.GetAll())).Methods(http.MethodPost)
+	router.HandleFunc("/test/create", middleware.IsAuth(handler.CreateTest())).Methods(http.MethodPost)
+	router.HandleFunc("/test/delete/{id}", middleware.IsAuth(handler.DeleteTest())).Methods(http.MethodDelete)
+	router.HandleFunc("/test/changeActive", middleware.IsAuth(handler.ChangeActiveTestStatus())).Methods(http.MethodPut)
 }
 
 func (s *TestManagerHandler) GetAll() http.HandlerFunc {

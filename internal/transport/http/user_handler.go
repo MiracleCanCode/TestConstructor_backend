@@ -23,7 +23,7 @@ import (
 
 type CacheManagerInterface interface {
 	Get(key string, out interface{}) error
-	Set(key string, value interface{}, ttl time.Duration)
+	Set(key string, value interface{}, ttl time.Duration) error
 	Delete(pattern string) error
 }
 
@@ -54,7 +54,7 @@ type User struct {
 func NewUserHandler(logger *zap.Logger, db *gorm.DB, router *mux.Router, cfg *configs.Config) {
 	repo := repository.NewUser(db, logger)
 	rdb := redis.New()
-	cache := cachemanager.New(rdb, logger)
+	cache := cachemanager.New(rdb)
 	usecase := usecases.NewUser(repo, cache)
 	handler := &User{
 		logger:     logger,
@@ -66,10 +66,10 @@ func NewUserHandler(logger *zap.Logger, db *gorm.DB, router *mux.Router, cfg *co
 		usecase:    usecase,
 	}
 
-	router.HandleFunc("/api/user/getData", middleware.IsAuth(handler.GetUserData())).Methods(http.MethodGet)
-	router.HandleFunc("/api/user/update", middleware.IsAuth(handler.UpdateUser())).Methods(http.MethodPost)
-	router.HandleFunc("/api/user/getByLogin", middleware.IsAuth(handler.GetUserByLogin())).Methods(http.MethodPost)
-	router.HandleFunc("/api/user/logout", middleware.IsAuth(handler.Logout())).Methods(http.MethodGet)
+	router.HandleFunc("/user/getData", middleware.IsAuth(handler.GetUserData())).Methods(http.MethodGet)
+	router.HandleFunc("/user/update", middleware.IsAuth(handler.UpdateUser())).Methods(http.MethodPost)
+	router.HandleFunc("/user/getByLogin", middleware.IsAuth(handler.GetUserByLogin())).Methods(http.MethodPost)
+	router.HandleFunc("/user/logout", middleware.IsAuth(handler.Logout())).Methods(http.MethodGet)
 }
 
 func (s *User) GetUserData() http.HandlerFunc {
@@ -101,7 +101,6 @@ func (s *User) GetUserData() http.HandlerFunc {
 			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
-		w.WriteHeader(http.StatusAccepted)
 	}
 }
 
@@ -126,7 +125,6 @@ func (s *User) UpdateUser() http.HandlerFunc {
 			return
 		}
 
-		w.WriteHeader(http.StatusAccepted)
 	}
 }
 
@@ -157,7 +155,6 @@ func (s *User) GetUserByLogin() http.HandlerFunc {
 			errorHandler.HandleError(constants.InternalServerError, http.StatusInternalServerError, err)
 			return
 		}
-		w.WriteHeader(http.StatusAccepted)
 	}
 }
 
@@ -170,6 +167,5 @@ func (s *User) Logout() http.HandlerFunc {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		w.WriteHeader(http.StatusAccepted)
 	}
 }

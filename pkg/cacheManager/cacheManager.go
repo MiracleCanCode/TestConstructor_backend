@@ -6,10 +6,9 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"go.uber.org/zap"
 )
 
-type RedisInterface interface {
+type redisInterface interface {
 	Get(key string) (string, error)
 	Set(key string, value interface{}, ttl time.Duration) error
 	Del(key string) error
@@ -18,14 +17,12 @@ type RedisInterface interface {
 }
 
 type CacheManager struct {
-	rdb    RedisInterface
-	logger *zap.Logger
+	rdb redisInterface
 }
 
-func New(rdb RedisInterface, logger *zap.Logger) *CacheManager {
+func New(rdb redisInterface) *CacheManager {
 	return &CacheManager{
-		rdb:    rdb,
-		logger: logger,
+		rdb: rdb,
 	}
 }
 
@@ -36,22 +33,23 @@ func (s *CacheManager) Get(key string, out interface{}) error {
 	}
 	if err := json.Unmarshal([]byte(data), out); err != nil {
 		if delErr := s.rdb.Del(key); delErr != nil {
-			s.logger.Warn("Failed to delete corrupted cache key", zap.String("key", key), zap.Error(delErr))
+			return fmt.Errorf("Get failed delete data from cache: %w", err)
 		}
 		return fmt.Errorf("Get: failed get data from cache:%w", err)
 	}
 	return nil
 }
 
-func (s *CacheManager) Set(key string, value interface{}, ttl time.Duration) {
+func (s *CacheManager) Set(key string, value interface{}, ttl time.Duration) error {
 	data, err := json.Marshal(value)
 	if err != nil {
-		s.logger.Warn("Failed to marshal data for cache", zap.String("key", key), zap.Error(err))
-		return
+		return fmt.Errorf("Set: failed marshal data for redis: %w", err)
 	}
 	if err := s.rdb.Set(key, data, ttl); err != nil {
-		s.logger.Warn("Failed to cache data", zap.String("key", key), zap.Error(err))
+		return fmt.Errorf("Set: failed set data to redis: %w", err)
 	}
+
+	return nil
 }
 
 func (s *CacheManager) Delete(pattern string) error {

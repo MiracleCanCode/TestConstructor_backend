@@ -37,7 +37,8 @@ func (s *JWT) createToken(login string, duration time.Duration) (string, error) 
 }
 
 func (s *JWT) CreateAccessToken(login string) (string, error) {
-	token, err := s.createToken(login, time.Hour*24)
+	healthTokenTime := time.Hour * 24
+	token, err := s.createToken(login, healthTokenTime)
 	if err != nil {
 		return "", fmt.Errorf("CreateAccessToken: failed to create access token: %w", err)
 	}
@@ -45,7 +46,8 @@ func (s *JWT) CreateAccessToken(login string) (string, error) {
 }
 
 func (s *JWT) CreateRefreshToken(login string) (string, error) {
-	token, err := s.createToken(login, time.Hour*24*7)
+	healthTokenTime := time.Hour * 24 * 7
+	token, err := s.createToken(login, healthTokenTime)
 	if err != nil {
 		return "", fmt.Errorf("CreateRefreshToken: failed to create refresh token: %w", err)
 	}

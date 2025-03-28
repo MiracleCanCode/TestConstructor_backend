@@ -34,6 +34,7 @@ func New(db *gorm.DB, logger *zap.Logger, cfg *configs.Config) *api {
 func (s *api) RunApp() error {
 	s.FillEndpoints()
 	handler := middleware.DefaultCORSMiddleware()(s.router)
+	middleware.TraceLogger(handler)
 	s.log.Info("Server started")
 	return http.ListenAndServe(s.addr, handler)
 }

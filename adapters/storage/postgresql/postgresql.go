@@ -65,15 +65,16 @@ func New(conf *configs.Config, log *zap.Logger) (DBInterface, error) {
 			db = db.Debug()
 		}
 
-		sqlDb.SetConnMaxIdleTime(30 * time.Minute)
+		connLifeTimeMax := 30 * time.Minute
+		sqlDb.SetConnMaxIdleTime(connLifeTimeMax)
 		sqlDb.SetMaxOpenConns(150)
-		sqlDb.SetConnMaxLifetime(30 * time.Minute)
+		sqlDb.SetConnMaxLifetime(connLifeTimeMax)
 
 		instance = &PostgresDB{db: db}
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("New postgres: %w", err)
+		return nil, fmt.Errorf("New postgres: failed create postgres instance: %w", err)
 	}
 	return instance, nil
 }
@@ -92,7 +93,7 @@ func (p *PostgresDB) Close() {
 func (p *PostgresDB) BeginTransaction(ctx context.Context) (*gorm.DB, error) {
 	tx := p.db.WithContext(ctx).Begin()
 	if tx.Error != nil {
-		return nil, fmt.Errorf("Begin transaction: %w", tx.Error)
+		return nil, fmt.Errorf("Begin transaction: %w", tx.Error.Error())
 	}
 	return tx, nil
 }
